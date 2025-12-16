@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/JulienBreux/run-cli/internal/run/auth"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	model_project "github.com/JulienBreux/run-cli/internal/run/model/common/project"
@@ -27,6 +29,7 @@ var (
 	regionModal  tview.Primitive
 	
 	footerPages *tview.Pages
+	errorView   *tview.TextView
 )
 
 const (
@@ -92,13 +95,12 @@ func layout() *tview.Flex {
 	pages.AddPage(project.MODAL_PAGE_ID, projectModal, true, true)
 	pages.AddPage(region.MODAL_PAGE_ID, regionModal, true, true)
 
-	// Footer (Spinner)
+	// Footer (Spinner & Error)
+	errorView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter)
 	footerPages = tview.NewPages()
 	footerPages.AddPage("empty", tview.NewBox(), true, true)
 	footerPages.AddPage("loading", spinner.New(), true, false)
-
-	// pages.AddPage("details", detailView, true, false)
-	// pages.AddPage("logs", logView, true, false)
+	footerPages.AddPage("error", errorView, true, false)
 
 	layout := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(header.New(currentInfo), 7, 1, false).
@@ -146,6 +148,15 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 		}
 	}
 
+	// Escape Handling (Removed)
+	/*
+	if event.Key() == ESCAPE_SHORTCUT {
+		// Quit application.
+		app.Stop()
+		return nil
+	}
+	*/
+
 	return event
 }
 
@@ -157,24 +168,37 @@ func hideLoading() {
 	footerPages.SwitchToPage("empty")
 }
 
+func showError(err error) {
+	errorView.SetText(fmt.Sprintf("[red]%s", err.Error()))
+	footerPages.SwitchToPage("error")
+}
+
 func switchTo(pageID string) {
 	previousPageID = currentPageID
 	currentPageID = pageID
 	pages.SwitchToPage(pageID)
 
+	callback := func(err error) {
+		if err != nil {
+			showError(err)
+		} else {
+			hideLoading()
+		}
+	}
+
 	switch pageID {
 	case service.LIST_PAGE_ID:
 		service.Shortcuts()
 		showLoading()
-		service.ListReload(app, currentInfo, hideLoading)
+		service.ListReload(app, currentInfo, callback)
 	case job.LIST_PAGE_ID:
 		job.Shortcuts()
 		showLoading()
-		job.ListReload(app, currentInfo, hideLoading)
+		job.ListReload(app, currentInfo, callback)
 	case worker.LIST_PAGE_ID:
 		worker.Shortcuts()
 		showLoading()
-		worker.ListReload(app, currentInfo, hideLoading)
+		worker.ListReload(app, currentInfo, callback)
 	case project.MODAL_PAGE_ID:
 		header.ContextShortcutView.Clear()
 		app.SetFocus(projectModal)

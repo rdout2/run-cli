@@ -38,7 +38,7 @@ func List() *table.Table {
 	return listTable
 }
 
-func ListReload(app *tview.Application, currentInfo info.Info, onDone func()) {
+func ListReload(app *tview.Application, currentInfo info.Info, onResult func(error)) {
 	listTable.Table.Clear()
 	listTable.SetHeaders(listHeaders)
 
@@ -47,10 +47,10 @@ func ListReload(app *tview.Application, currentInfo info.Info, onDone func()) {
 		workerPools, err := api_workerpool.List(currentInfo.Project, currentInfo.Region)
 
 		app.QueueUpdateDraw(func() {
-			defer onDone()
+			defer onResult(err)
 
 			if err != nil {
-				listTable.Table.SetTitle(fmt.Sprintf(" %s (Error) ", LIST_PAGE_TITLE))
+				// listTable.Table.SetTitle(fmt.Sprintf(" %s (Error) ", LIST_PAGE_TITLE)) // Removed error from title
 				return
 			}
 
