@@ -9,6 +9,7 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	"github.com/JulienBreux/run-cli/internal/run/ui/header"
 	"github.com/JulienBreux/run-cli/internal/run/ui/table"
+	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -37,29 +38,36 @@ func List() *table.Table {
 	return listTable
 }
 
-func ListReload(currentInfo info.Info) {
+func ListReload(app *tview.Application, currentInfo info.Info, onDone func()) {
 	listTable.Table.Clear()
 	listTable.SetHeaders(listHeaders)
 
-	// Fetch real data
-	services, err := api_service.List(currentInfo.Project, currentInfo.Region)
-	if err != nil {
-		// Keep empty if error
-		listTable.Table.SetTitle(fmt.Sprintf(" %s (Error) ", LIST_PAGE_TITLE))
-		return
-	}
+	go func() {
+		// Fetch real data
+		services, err := api_service.List(currentInfo.Project, currentInfo.Region)
 
-	for i, s := range services {
-		row := i + 1 // +1 for header row
-		listTable.Table.SetCell(row, 0, tview.NewTableCell(s.Name))
-		listTable.Table.SetCell(row, 1, tview.NewTableCell(s.Region))
-		listTable.Table.SetCell(row, 2, tview.NewTableCell(s.URI))
-		listTable.Table.SetCell(row, 3, tview.NewTableCell(s.LastModifier))
-		listTable.Table.SetCell(row, 4, tview.NewTableCell(s.UpdateTime.Format("2006-01-02 15:04:05")))
-	}
+		app.QueueUpdateDraw(func() {
+			defer onDone()
 
-	// Refresh title
-	listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(services)))
+			if err != nil {
+				// Keep empty if error
+				listTable.Table.SetTitle(fmt.Sprintf(" %s (Error) ", LIST_PAGE_TITLE))
+				return
+			}
+
+			for i, s := range services {
+				row := i + 1 // +1 for header row
+				listTable.Table.SetCell(row, 0, tview.NewTableCell(s.Name))
+				listTable.Table.SetCell(row, 1, tview.NewTableCell(s.Region))
+				listTable.Table.SetCell(row, 2, tview.NewTableCell(s.URI))
+				listTable.Table.SetCell(row, 3, tview.NewTableCell(s.LastModifier))
+				listTable.Table.SetCell(row, 4, tview.NewTableCell(humanize.Time(s.UpdateTime)))
+			}
+
+			// Refresh title
+			listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(services)))
+		})
+	}()
 }
 
 // GetSelectedServiceURL returns the URL of the currently selected service.

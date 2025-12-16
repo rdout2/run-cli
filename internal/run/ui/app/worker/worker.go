@@ -8,6 +8,7 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	"github.com/JulienBreux/run-cli/internal/run/ui/header"
 	"github.com/JulienBreux/run-cli/internal/run/ui/table"
+	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -37,49 +38,56 @@ func List() *table.Table {
 	return listTable
 }
 
-func ListReload(currentInfo info.Info) {
+func ListReload(app *tview.Application, currentInfo info.Info, onDone func()) {
 	listTable.Table.Clear()
 	listTable.SetHeaders(listHeaders)
 
-	// Fetch real data
-	workerPools, err := api_workerpool.List(currentInfo.Project, currentInfo.Region)
-	if err != nil {
-		listTable.Table.SetTitle(fmt.Sprintf(" %s (Error: %s) ", LIST_PAGE_TITLE, err))
-		return
-	}
+	go func() {
+		// Fetch real data
+		workerPools, err := api_workerpool.List(currentInfo.Project, currentInfo.Region)
 
-	for i, w := range workerPools {
-		// Infer Deployment Type
-		deploymentType := "Standard"
-		if w.PrivatePoolVpcConfig != nil {
-			deploymentType = "Private"
-		} else if w.NetworkConfig != nil && w.NetworkConfig.EgressOption == "PRIVATE_ENDPOINT" {
-			deploymentType = "Hybrid"
-		}
+		app.QueueUpdateDraw(func() {
+			defer onDone()
 
-		// Infer Scaling
-		scaling := "-"
-		if w.WorkerConfig != nil {
-			scaling = fmt.Sprintf("Machine: %s, Disk: %dGB", w.WorkerConfig.MachineType, w.WorkerConfig.DiskSizeGb)
-		}
+			if err != nil {
+				listTable.Table.SetTitle(fmt.Sprintf(" %s (Error) ", LIST_PAGE_TITLE))
+				return
+			}
 
-		// Format labels
-		var labels []string
-		for k, v := range w.Labels {
-			labels = append(labels, fmt.Sprintf("%s:%s", k, v))
-		}
+			for i, w := range workerPools {
+				// Infer Deployment Type
+				deploymentType := "Standard"
+				if w.PrivatePoolVpcConfig != nil {
+					deploymentType = "Private"
+				} else if w.NetworkConfig != nil && w.NetworkConfig.EgressOption == "PRIVATE_ENDPOINT" {
+					deploymentType = "Hybrid"
+				}
 
-		row := i + 1 // +1 for header row
-		listTable.Table.SetCell(row, 0, tview.NewTableCell(w.DisplayName))
-		listTable.Table.SetCell(row, 1, tview.NewTableCell(deploymentType))
-		listTable.Table.SetCell(row, 2, tview.NewTableCell(w.Region))
-		listTable.Table.SetCell(row, 3, tview.NewTableCell(w.UpdateTime.Format("2006-01-02 15:04:05")))
-		listTable.Table.SetCell(row, 4, tview.NewTableCell(scaling))
-		listTable.Table.SetCell(row, 5, tview.NewTableCell(strings.Join(labels, ", ")))
-	}
+				// Infer Scaling
+				scaling := "-"
+				if w.WorkerConfig != nil {
+					scaling = fmt.Sprintf("Machine: %s, Disk: %dGB", w.WorkerConfig.MachineType, w.WorkerConfig.DiskSizeGb)
+				}
 
-	// Refresh title
-	listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(workerPools)))
+				// Format labels
+				var labels []string
+				for k, v := range w.Labels {
+					labels = append(labels, fmt.Sprintf("%s:%s", k, v))
+				}
+
+				row := i + 1 // +1 for header row
+				listTable.Table.SetCell(row, 0, tview.NewTableCell(w.DisplayName))
+				listTable.Table.SetCell(row, 1, tview.NewTableCell(deploymentType))
+				listTable.Table.SetCell(row, 2, tview.NewTableCell(w.Region))
+				listTable.Table.SetCell(row, 3, tview.NewTableCell(humanize.Time(w.UpdateTime)))
+				listTable.Table.SetCell(row, 4, tview.NewTableCell(scaling))
+				listTable.Table.SetCell(row, 5, tview.NewTableCell(strings.Join(labels, ", ")))
+			}
+
+			// Refresh title
+			listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(workerPools)))
+		})
+	}()
 }
 
 func Shortcuts() {
@@ -89,3 +97,4 @@ func Shortcuts() {
 [dodgerblue]<s> [white]Scale`
 	header.ContextShortcutView.SetText(shortcuts)
 }
+

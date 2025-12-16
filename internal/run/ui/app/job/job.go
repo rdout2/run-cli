@@ -8,6 +8,7 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	"github.com/JulienBreux/run-cli/internal/run/ui/header"
 	"github.com/JulienBreux/run-cli/internal/run/ui/table"
+	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -36,42 +37,49 @@ func List() *table.Table {
 	return listTable
 }
 
-func ListReload(currentInfo info.Info) {
+func ListReload(app *tview.Application, currentInfo info.Info, onDone func()) {
 	listTable.Table.Clear()
 	listTable.SetHeaders(listHeaders)
 
-	// Fetch real data
-	jobs, err := api_job.List(currentInfo.Project, currentInfo.Region)
-	if err != nil {
-		listTable.Table.SetTitle(fmt.Sprintf(" %s (Error: %s) ", LIST_PAGE_TITLE, err))
-		return
-	}
+	go func() {
+		// Fetch real data
+		jobs, err := api_job.List(currentInfo.Project, currentInfo.Region)
 
-	for i, j := range jobs {
-		// Extract info
-		nameParts := strings.Split(j.Name, "/")
-		displayName := nameParts[len(nameParts)-1]
+		app.QueueUpdateDraw(func() {
+			defer onDone()
 
-		status := "-"
-		if j.TerminalCondition != nil {
-			status = j.TerminalCondition.State
-		}
+			if err != nil {
+				listTable.Table.SetTitle(fmt.Sprintf(" %s (Error) ", LIST_PAGE_TITLE))
+				return
+			}
 
-		lastExecuted := "-"
-		if j.LatestCreatedExecution != nil {
-			lastExecuted = j.LatestCreatedExecution.CreateTime.Format("2006-01-02 15:04:05")
-		}
+			for i, j := range jobs {
+				// Extract info
+				nameParts := strings.Split(j.Name, "/")
+				displayName := nameParts[len(nameParts)-1]
 
-		row := i + 1 // +1 for header row
-		listTable.Table.SetCell(row, 0, tview.NewTableCell(displayName))
-		listTable.Table.SetCell(row, 1, tview.NewTableCell(status))
-		listTable.Table.SetCell(row, 2, tview.NewTableCell(lastExecuted))
-		listTable.Table.SetCell(row, 3, tview.NewTableCell(j.Region))
-		listTable.Table.SetCell(row, 4, tview.NewTableCell(j.Creator))
-	}
+				status := "-"
+				if j.TerminalCondition != nil {
+					status = j.TerminalCondition.State
+				}
 
-	// Refresh title
-	listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(jobs)))
+				lastExecuted := "-"
+				if j.LatestCreatedExecution != nil {
+					lastExecuted = humanize.Time(j.LatestCreatedExecution.CreateTime)
+				}
+
+				row := i + 1 // +1 for header row
+				listTable.Table.SetCell(row, 0, tview.NewTableCell(displayName))
+				listTable.Table.SetCell(row, 1, tview.NewTableCell(status))
+				listTable.Table.SetCell(row, 2, tview.NewTableCell(lastExecuted))
+				listTable.Table.SetCell(row, 3, tview.NewTableCell(j.Region))
+				listTable.Table.SetCell(row, 4, tview.NewTableCell(j.Creator))
+			}
+
+			// Refresh title
+			listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(jobs)))
+		})
+	}()
 }
 
 func Shortcuts() {

@@ -9,6 +9,7 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/region"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/service"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/worker"
+	"github.com/JulienBreux/run-cli/internal/run/ui/component/spinner"
 	"github.com/JulienBreux/run-cli/internal/run/ui/header"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -24,6 +25,8 @@ var (
 
 	projectModal tview.Primitive
 	regionModal  tview.Primitive
+	
+	footerPages *tview.Pages
 )
 
 const (
@@ -88,6 +91,12 @@ func layout() *tview.Flex {
 	// Modals.
 	pages.AddPage(project.MODAL_PAGE_ID, projectModal, true, true)
 	pages.AddPage(region.MODAL_PAGE_ID, regionModal, true, true)
+
+	// Footer (Spinner)
+	footerPages = tview.NewPages()
+	footerPages.AddPage("empty", tview.NewBox(), true, true)
+	footerPages.AddPage("loading", spinner.New(), true, false)
+
 	// pages.AddPage("details", detailView, true, false)
 	// pages.AddPage("logs", logView, true, false)
 
@@ -95,7 +104,8 @@ func layout() *tview.Flex {
 		AddItem(header.New(currentInfo), 7, 1, false).
 		// AddItem(titleBar, 1, 1, false).
 		// AddItem(searchField, 1, 1, false). // New Search Bar (Height 1)
-		AddItem(pages, 0, 1, true)
+		AddItem(pages, 0, 1, true).
+		AddItem(footerPages, 1, 1, false) // Footer
 
 	// Default page
 	switchTo(service.LIST_PAGE_ID)
@@ -131,10 +141,20 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 
 	// Open URL for Service list
 	if currentPageID == service.LIST_PAGE_ID {
-		return service.HandleShortcuts(event)
+		if result := service.HandleShortcuts(event); result == nil {
+			return nil
+		}
 	}
 
 	return event
+}
+
+func showLoading() {
+	footerPages.SwitchToPage("loading")
+}
+
+func hideLoading() {
+	footerPages.SwitchToPage("empty")
 }
 
 func switchTo(pageID string) {
@@ -145,13 +165,16 @@ func switchTo(pageID string) {
 	switch pageID {
 	case service.LIST_PAGE_ID:
 		service.Shortcuts()
-		service.ListReload(currentInfo)
+		showLoading()
+		service.ListReload(app, currentInfo, hideLoading)
 	case job.LIST_PAGE_ID:
 		job.Shortcuts()
-		job.ListReload(currentInfo)
+		showLoading()
+		job.ListReload(app, currentInfo, hideLoading)
 	case worker.LIST_PAGE_ID:
 		worker.Shortcuts()
-		worker.ListReload(currentInfo)
+		showLoading()
+		worker.ListReload(app, currentInfo, hideLoading)
 	case project.MODAL_PAGE_ID:
 		header.ContextShortcutView.Clear()
 		app.SetFocus(projectModal)
