@@ -27,7 +27,7 @@ var (
 
 	projectModal tview.Primitive
 	regionModal  tview.Primitive
-	
+
 	footerPages *tview.Pages
 	errorView   *tview.TextView
 )
@@ -61,8 +61,6 @@ func Run() error {
 		switchTo(service.LIST_PAGE_ID)
 	})
 
-	// Auth.
-
 	// Load data.
 	currentInfo = info.Info{
 		User:    "Guest",
@@ -71,7 +69,7 @@ func Run() error {
 		Region:  "-",
 	}
 
-	// Try to load real info
+	// Try to load real info.
 	if realInfo, err := auth.GetInfo(); err == nil {
 		currentInfo.User = realInfo.User
 		currentInfo.Project = realInfo.Project
@@ -95,7 +93,7 @@ func layout() *tview.Flex {
 	pages.AddPage(project.MODAL_PAGE_ID, projectModal, true, true)
 	pages.AddPage(region.MODAL_PAGE_ID, regionModal, true, true)
 
-	// Footer (Spinner & Error)
+	// Footer (Spinner & Error).
 	errorView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter)
 	footerPages = tview.NewPages()
 	footerPages.AddPage("empty", tview.NewBox(), true, true)
@@ -104,12 +102,10 @@ func layout() *tview.Flex {
 
 	layout := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(header.New(currentInfo), 7, 1, false).
-		// AddItem(titleBar, 1, 1, false).
-		// AddItem(searchField, 1, 1, false). // New Search Bar (Height 1)
 		AddItem(pages, 0, 1, true).
-		AddItem(footerPages, 1, 1, false) // Footer
+		AddItem(footerPages, 1, 1, false)
 
-	// Default page
+	// Default page.
 	switchTo(service.LIST_PAGE_ID)
 
 	return layout
@@ -147,15 +143,6 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 	}
-
-	// Escape Handling (Removed)
-	/*
-	if event.Key() == ESCAPE_SHORTCUT {
-		// Quit application.
-		app.Stop()
-		return nil
-	}
-	*/
 
 	return event
 }

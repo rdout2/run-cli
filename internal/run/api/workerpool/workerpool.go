@@ -6,11 +6,12 @@ import (
 	"strings"
 	"sync"
 
-	cloudbuild "cloud.google.com/go/cloudbuild/apiv1"
-	"cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb"
+	run "cloud.google.com/go/run/apiv2"
+	"cloud.google.com/go/run/apiv2/runpb"
 	api_region "github.com/JulienBreux/run-cli/internal/run/api/region"
 	model "github.com/JulienBreux/run-cli/internal/run/model/workerpool"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
@@ -24,45 +25,82 @@ func List(project, region string) ([]model.WorkerPool, error) {
 	ctx := context.Background()
 
 	// Explicitly find default credentials
-	creds, err := google.FindDefaultCredentials(ctx, cloudbuild.DefaultAuthScopes()...)
+	creds, err := google.FindDefaultCredentials(ctx, run.DefaultAuthScopes()...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find default credentials: %w. Tip: Try running 'gcloud auth application-default login' to authenticate the Go client", err)
 	}
 
-	c, err := cloudbuild.NewClient(ctx, option.WithCredentials(creds))
+	c, err := run.NewWorkerPoolsClient(ctx, option.WithCredentials(creds))
 	if err != nil {
 		return nil, err
 	}
 	defer c.Close()
 
-	req := &cloudbuildpb.ListWorkerPoolsRequest{
+	req := &runpb.ListWorkerPoolsRequest{
 		Parent: fmt.Sprintf("projects/%s/locations/%s", project, region),
 	}
 
+	// resp, err := c.ListWorkerPools(ctx, req)
+	// if err != nil {
+	// 	if strings.Contains(err.Error(), "Unauthenticated") || strings.Contains(err.Error(), "PermissionDenied") {
+	// 		return nil, fmt.Errorf("authentication failed: %w. Tip: Ensure your 'gcloud auth application-default login' is valid and has permissions", err)
+	// 	}
+	// 	return nil, fmt.Errorf("list worker pools failed (parent=%s): %w", req.Parent, err)
+	// }
+
+	// Fetch worker pools
 	var workerPools []model.WorkerPool
-	resp, err := c.ListWorkerPools(ctx, req)
-	if err != nil {
-		if strings.Contains(err.Error(), "Unauthenticated") || strings.Contains(err.Error(), "PermissionDenied") {
-			return nil, fmt.Errorf("authentication failed: %w. Tip: Ensure your 'gcloud auth application-default login' is valid and has permissions", err)
+	it := c.ListWorkerPools(ctx, req)
+	for {
+		resp, err := it.Next()
+		if err == iterator.Done {
+			break
 		}
-		return nil, err
-	}
+		if err != nil {
+			if strings.Contains(err.Error(), "Unauthenticated") || strings.Contains(err.Error(), "PermissionDenied") {
+				return nil, fmt.Errorf("authentication failed: %w. Tip: Ensure your 'gcloud auth application-default login' is valid and has permissions", err)
+			}
+			return nil, err
+		}
 
-	for _, wp := range resp.WorkerPools {
-		// Map fields (simplified for now due to proto version mismatch)
-		// TODO: Map WorkerConfig, NetworkConfig, PrivatePoolVpcConfig correctly based on cloudbuildpb version
+		// Determine Service Name (Last part of resource name)
+		nameParts := strings.Split(resp.Name, "/")
+		name := nameParts[len(nameParts)-1]
 
+		// Map fields
 		workerPools = append(workerPools, model.WorkerPool{
-			Name:        wp.Name,
-			DisplayName: wp.DisplayName,
-			State:       wp.State.String(),
-			UpdateTime:  wp.UpdateTime.AsTime(),
+			DisplayName: name,
+			Name:        resp.Name,
+			State:       "...", ///resp.State.String(),
+			UpdateTime:  resp.UpdateTime.AsTime(),
 			Region:      region,
-			Labels:      wp.Annotations,
+			Labels:      resp.Annotations,
 		})
 	}
 
 	return workerPools, nil
+
+	// var workerPools []model.WorkerPool
+	// for _, wp := range resp.WorkerPools {
+	// 	// Determine Worker Pool Name (Last part of resource name)
+	// 	nameParts := strings.Split(wp.Name, "/")
+	// 	name := nameParts[len(nameParts)-1]
+
+	// 	// Map fields
+	// 	// Note: Detailed config fields are commented out due to proto version mismatch issues.
+	// 	// TODO: Map WorkerConfig, NetworkConfig, PrivatePoolVpcConfig when correct proto is available.
+
+	// 	workerPools = append(workerPools, model.WorkerPool{
+	// 		Name:        name, // Use simple name
+	// 		DisplayName: wp.DisplayName,
+	// 		State:       wp.State.String(),
+	// 		UpdateTime:  wp.UpdateTime.AsTime(),
+	// 		Region:      region,
+	// 		Labels:      wp.Annotations,
+	// 	})
+	// }
+
+	// return workerPools, nil
 }
 
 func listAllRegions(project string) ([]model.WorkerPool, error) {
