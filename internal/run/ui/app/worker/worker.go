@@ -41,6 +41,7 @@ func List() *table.Table {
 func ListReload(app *tview.Application, currentInfo info.Info, onResult func(error)) {
 	listTable.Table.Clear()
 	listTable.SetHeaders(listHeaders)
+	app.SetFocus(listTable.Table)
 
 	go func() {
 		// Fetch real data
@@ -97,4 +98,3 @@ func Shortcuts() {
 [dodgerblue]<s> [white]Scale`
 	header.ContextShortcutView.SetText(shortcuts)
 }
-
