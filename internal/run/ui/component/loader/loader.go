@@ -10,8 +10,9 @@ import (
 // New returns a new loader component.
 func New() tview.Primitive {
 	text := fmt.Sprintf("%s\nLoading... Please wait", logo.String())
-	modal := tview.NewModal().
+	textView := tview.NewTextView().
 		SetText(text).
+		SetTextAlign(tview.AlignCenter).
 		SetBackgroundColor(tview.Styles.PrimitiveBackgroundColor)
-	return modal
+	return textView
 }
