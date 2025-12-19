@@ -33,5 +33,7 @@ func String() string {
 		logo.WriteString(line)
 		logo.WriteString("\n")
 	}
+	logo.WriteString("\n") // Add an empty line for spacing
+	logo.WriteString(color + "With [red]♥[-] Julien Breux")
 	return logo.String()
 }
