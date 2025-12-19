@@ -41,15 +41,20 @@ const (
 )
 
 // List returns a list of workers.
-func List() *table.Table {
+func List(app *tview.Application) *table.Table {
 	listTable = table.New(LIST_PAGE_TITLE)
 	listTable.SetHeadersWithExpansions(listHeaders, listExpansions)
+
+	app.SetFocus(listTable.Table)
+
 	return listTable
 }
 
 func ListReload(app *tview.Application, currentInfo info.Info, onResult func(error)) {
 	listTable.Table.Clear()
 	listTable.SetHeadersWithExpansions(listHeaders, listExpansions)
+
+	app.SetFocus(listTable.Table)
 
 	go func() {
 		// Fetch real data

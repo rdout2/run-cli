@@ -21,7 +21,7 @@ var (
 		"URL",
 		"LAST DEPLOYED BY",
 		"LAST DEPLOYED AT"}
-	
+
 	listExpansions = []int{
 		2, // SERVICE
 		1, // REGION
@@ -40,15 +40,19 @@ const (
 )
 
 // List returns a list of services.
-func List() *table.Table {
+func List(app *tview.Application) *table.Table {
 	listTable = table.New(LIST_PAGE_TITLE)
 	listTable.SetHeadersWithExpansions(listHeaders, listExpansions)
+
+	app.SetFocus(listTable.Table)
+
 	return listTable
 }
 
 func ListReload(app *tview.Application, currentInfo info.Info, onResult func(error)) {
 	listTable.Table.Clear()
 	listTable.SetHeadersWithExpansions(listHeaders, listExpansions)
+	app.SetFocus(listTable.Table)
 
 	go func() {
 		// Fetch real data

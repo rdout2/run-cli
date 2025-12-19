@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/JulienBreux/run-cli/internal/run/auth"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
@@ -12,6 +13,7 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/region"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/service"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/worker"
+	"github.com/JulienBreux/run-cli/internal/run/ui/component/loader"
 	"github.com/JulienBreux/run-cli/internal/run/ui/component/spinner"
 	"github.com/JulienBreux/run-cli/internal/run/ui/header"
 	"github.com/gdamore/tcell/v2"
@@ -19,8 +21,9 @@ import (
 )
 
 var (
-	app   *tview.Application
-	pages *tview.Pages
+	app       *tview.Application
+	rootPages *tview.Pages // Root pages to hold Layout and Loader
+	pages     *tview.Pages // Content pages (Service, Job, etc.)
 
 	previousPageID string
 	currentPageID  string
@@ -38,14 +41,63 @@ const (
 	ENABLE_MOUSE = true
 
 	ESCAPE_SHORTCUT = tcell.KeyEscape
+	LOADER_PAGE_ID  = "loader"
+	LAYOUT_PAGE_ID  = "layout"
 )
 
-// ran the application.
+// Run runs the application.
 func Run() error {
 	app = tview.NewApplication()
 	app.SetInputCapture(shortcuts)
 
-	// Modals.
+	// Initialize default info
+	currentInfo = info.Info{
+		User:    "Guest",
+		Project: "None",
+		Version: "dev",
+		Region:  "-",
+	}
+
+	// Root Pages (Loader vs App)
+	rootPages = tview.NewPages()
+	rootPages.AddPage(LOADER_PAGE_ID, loader.New(), true, true)
+
+	// Start initialization in background
+	go initializeApp()
+
+	return app.SetRoot(rootPages, FULLSCREEN).
+		EnableMouse(ENABLE_MOUSE).
+		Run()
+}
+
+func initializeApp() {
+	// Simulate a small delay or just wait for heavy lifting
+	// This helps the UI render the loader first
+	time.Sleep(100 * time.Millisecond)
+
+	// 1. Load Auth/Info (Potentially slow)
+	if realInfo, err := auth.GetInfo(); err == nil {
+		currentInfo.User = realInfo.User
+		currentInfo.Project = realInfo.Project
+		currentInfo.Region = realInfo.Region
+	}
+
+	app.QueueUpdateDraw(func() {
+		// 2. Build the main layout
+		mainLayout := buildLayout()
+		rootPages.AddPage(LAYOUT_PAGE_ID, mainLayout, true, false)
+
+		// 3. Switch to main layout
+		rootPages.SwitchToPage(LAYOUT_PAGE_ID)
+
+		// 4. Trigger initial data load
+		switchTo(service.LIST_PAGE_ID)
+	})
+}
+
+// buildLayout constructs the main application UI
+func buildLayout() *tview.Flex {
+	// Modals
 	projectModal = project.ProjectModal(app, func(selectedProject model_project.Project) {
 		currentInfo.Project = selectedProject.Name
 		header.UpdateInfo(currentInfo)
@@ -62,39 +114,17 @@ func Run() error {
 		switchTo(service.LIST_PAGE_ID)
 	})
 
-	// Load data.
-	currentInfo = info.Info{
-		User:    "Guest",
-		Project: "None",
-		Version: "dev",
-		Region:  "-",
-	}
-
-	// Try to load real info.
-	if realInfo, err := auth.GetInfo(); err == nil {
-		currentInfo.User = realInfo.User
-		currentInfo.Project = realInfo.Project
-		currentInfo.Region = realInfo.Region
-	}
-
-	return app.SetRoot(layout(), FULLSCREEN).
-		EnableMouse(ENABLE_MOUSE).
-		Run()
-}
-
-// returns the application layout.
-func layout() *tview.Flex {
 	pages = tview.NewPages()
-	// Lists.
-	pages.AddPage(service.LIST_PAGE_ID, service.List().Table, true, true)
-	pages.AddPage(job.LIST_PAGE_ID, job.List().Table, true, true)
-	pages.AddPage(worker.LIST_PAGE_ID, worker.List().Table, true, true)
+	// Lists
+	pages.AddPage(service.LIST_PAGE_ID, service.List(app).Table, true, true)
+	pages.AddPage(job.LIST_PAGE_ID, job.List(app).Table, true, true)
+	pages.AddPage(worker.LIST_PAGE_ID, worker.List(app).Table, true, true)
 
-	// Modals.
+	// Modals to Pages
 	pages.AddPage(project.MODAL_PAGE_ID, projectModal, true, true)
 	pages.AddPage(region.MODAL_PAGE_ID, regionModal, true, true)
 
-	// Footer (Spinner & Error).
+	// Footer (Spinner & Error)
 	errorView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter)
 	footerPages = tview.NewPages()
 	footerPages.AddPage("empty", tview.NewBox(), true, true)
@@ -106,14 +136,17 @@ func layout() *tview.Flex {
 		AddItem(pages, 0, 1, true).
 		AddItem(footerPages, 1, 1, false)
 
-	// Default page.
-	switchTo(service.LIST_PAGE_ID)
-
 	return layout
 }
 
 // shortcuts captures all key events.
 func shortcuts(event *tcell.EventKey) *tcell.EventKey {
+	// Disable shortcuts if we are still loading
+	frontPage, _ := rootPages.GetFrontPage()
+	if frontPage == LOADER_PAGE_ID {
+		return nil
+	}
+
 	// Navigation.
 	if event.Key() == service.LIST_PAGE_SHORTCUT {
 		switchTo(service.LIST_PAGE_ID)
