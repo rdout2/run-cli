@@ -54,7 +54,7 @@ func LogModal(app *tview.Application, projectID, filter, title string, closeModa
 			// Capture msg for closure
 			message := msg
 			app.QueueUpdateDraw(func() {
-				fmt.Fprintf(textView, "%s\n", message)
+				_, _ = fmt.Fprintf(textView, "%s\n", message)
 				statusText.SetText("Streaming logs... Press Esc to close.")
 				textView.ScrollToEnd()
 			})

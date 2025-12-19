@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
+	"github.com/JulienBreux/run-cli/internal/run/ui/component/logo"
 	"github.com/rivo/tview"
 )
 
@@ -19,7 +20,7 @@ func New(currentInfo info.Info) *tview.Flex {
 	return tview.NewFlex().
 		AddItem(columnInfo(currentInfo), 50, 1, false).
 		AddItem(columnShortcuts(), 0, 1, false).
-		AddItem(columnLogo(), 50, 1, false)
+		AddItem(logo.New(), 50, 1, false)
 }
 
 // UpdateInfo updates the info view.
@@ -61,19 +62,4 @@ func subColumnGlobalShortcuts() *tview.TextView {
 func subColumnContextShortcuts() *tview.TextView {
 	ContextShortcutView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignLeft)
 	return ContextShortcutView
-}
-
-// returns the logo column.
-func columnLogo() *tview.TextView {
-	logoText := tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignRight)
-	logoArt := []string{
-		"[#bd93f9] ____  _   _ _   _  ",
-		"|  _ \\| | | | \\ | | ",
-		"| |_) | | | |  \\| | ",
-		"|  _ <| |_| | . ` | ",
-		"|_| \\_\\_____|_| \\_| "}
-	for _, line := range logoArt {
-		_, _ = fmt.Fprintf(logoText, "%s\n", line)
-	}
-	return logoText
 }
