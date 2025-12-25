@@ -7,6 +7,7 @@ import (
 
 	api_service "github.com/JulienBreux/run-cli/internal/run/api/service"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
+	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
 	"github.com/JulienBreux/run-cli/internal/run/ui/header"
 	"github.com/JulienBreux/run-cli/internal/run/ui/table"
 	"github.com/dustin/go-humanize"
@@ -31,6 +32,7 @@ var (
 	}
 
 	listTable *table.Table
+	services  []model_service.Service
 )
 
 const (
@@ -56,7 +58,8 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 
 	go func() {
 		// Fetch real data
-		services, err := api_service.List(currentInfo.Project, currentInfo.Region)
+		var err error
+		services, err = api_service.List(currentInfo.Project, currentInfo.Region)
 
 		app.QueueUpdateDraw(func() {
 			defer onResult(err)
@@ -103,6 +106,15 @@ func GetSelectedService() (string, string) {
 	name := listTable.Table.GetCell(row, 0).Text
 	region := listTable.Table.GetCell(row, 1).Text
 	return name, region
+}
+
+// GetSelectedServiceFull returns the full service object for the selected row.
+func GetSelectedServiceFull() *model_service.Service {
+	row, _ := listTable.Table.GetSelection()
+	if row < 1 || len(services) == 0 {
+		return nil
+	}
+	return &services[row-1]
 }
 
 // HandleShortcuts handles service-specific shortcuts.

@@ -6,6 +6,7 @@ import (
 
 	api_workerpool "github.com/JulienBreux/run-cli/internal/run/api/workerpool"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
+	model_workerpool "github.com/JulienBreux/run-cli/internal/run/model/workerpool"
 	"github.com/JulienBreux/run-cli/internal/run/ui/header"
 	"github.com/JulienBreux/run-cli/internal/run/ui/table"
 	"github.com/dustin/go-humanize"
@@ -32,6 +33,7 @@ var (
 	}
 
 	listTable *table.Table
+	workers   []model_workerpool.WorkerPool
 )
 
 const (
@@ -58,7 +60,8 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 
 	go func() {
 		// Fetch real data
-		workers, err := api_workerpool.List(currentInfo.Project, currentInfo.Region)
+		var err error
+		workers, err = api_workerpool.List(currentInfo.Project, currentInfo.Region)
 
 		app.QueueUpdateDraw(func() {
 			defer onResult(err)
@@ -93,10 +96,18 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 	}()
 }
 
+// GetSelectedWorkerPoolFull returns the full workerpool object for the selected row.
+func GetSelectedWorkerPoolFull() *model_workerpool.WorkerPool {
+	row, _ := listTable.Table.GetSelection()
+	if row < 1 || len(workers) == 0 {
+		return nil
+	}
+	return &workers[row-1]
+}
+
 func Shortcuts() {
 	header.ContextShortcutView.Clear()
 	shortcuts := `[dodgerblue]<d> [white]Describe
-[dodgerblue]<l> [white]Logs
 [dodgerblue]<s> [white]Scale`
 	header.ContextShortcutView.SetText(shortcuts)
 }

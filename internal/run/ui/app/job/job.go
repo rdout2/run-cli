@@ -6,6 +6,7 @@ import (
 
 	api_job "github.com/JulienBreux/run-cli/internal/run/api/job"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
+	model_job "github.com/JulienBreux/run-cli/internal/run/model/job"
 	"github.com/JulienBreux/run-cli/internal/run/ui/header"
 	"github.com/JulienBreux/run-cli/internal/run/ui/table"
 	"github.com/dustin/go-humanize"
@@ -30,6 +31,7 @@ var (
 	}
 
 	listTable *table.Table
+	jobs      []model_job.Job
 )
 
 const (
@@ -53,7 +55,8 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 
 	go func() {
 		// Fetch real data
-		jobs, err := api_job.List(currentInfo.Project, currentInfo.Region)
+		var err error
+		jobs, err = api_job.List(currentInfo.Project, currentInfo.Region)
 
 		app.QueueUpdateDraw(func() {
 			defer onResult(err)
@@ -102,6 +105,15 @@ func GetSelectedJob() (string, string) {
 	name := listTable.Table.GetCell(row, 0).Text
 	region := listTable.Table.GetCell(row, 3).Text
 	return name, region
+}
+
+// GetSelectedJobFull returns the full job object for the selected row.
+func GetSelectedJobFull() *model_job.Job {
+	row, _ := listTable.Table.GetSelection()
+	if row < 1 || len(jobs) == 0 {
+		return nil
+	}
+	return &jobs[row-1]
 }
 
 func Shortcuts() {

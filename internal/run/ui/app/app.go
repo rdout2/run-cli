@@ -7,6 +7,7 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/auth"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	model_project "github.com/JulienBreux/run-cli/internal/run/model/common/project"
+	"github.com/JulienBreux/run-cli/internal/run/ui/app/describe"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/job"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/log"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/project"
@@ -180,6 +181,12 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 			}
 			return nil
 		}
+		if event.Rune() == 'd' {
+			if s := service.GetSelectedServiceFull(); s != nil {
+				openDescribeModal(s, s.Name)
+			}
+			return nil
+		}
 		if result := service.HandleShortcuts(event); result == nil {
 			return nil
 		}
@@ -191,6 +198,21 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 			name, region := job.GetSelectedJob()
 			if name != "" {
 				openLogModal(name, region, "job")
+			}
+			return nil
+		}
+		if event.Rune() == 'd' {
+			if j := job.GetSelectedJobFull(); j != nil {
+				openDescribeModal(j, j.Name)
+			}
+		}
+	}
+
+	// Worker List
+	if currentPageID == worker.LIST_PAGE_ID {
+		if event.Rune() == 'd' {
+			if w := worker.GetSelectedWorkerPoolFull(); w != nil {
+				openDescribeModal(w, w.Name)
 			}
 			return nil
 		}
@@ -269,4 +291,20 @@ func openLogModal(name, region, logType string) {
 
 	header.ContextShortcutView.Clear()
 	app.SetFocus(logModal)
+}
+
+func openDescribeModal(resource interface{}, title string) {
+	describeModal := describe.DescribeModal(app, resource, title, func() {
+		pages.RemovePage(describe.MODAL_PAGE_ID)
+		switchTo(previousPageID)
+	})
+
+	pages.AddPage(describe.MODAL_PAGE_ID, describeModal, true, true)
+
+	previousPageID = currentPageID
+	currentPageID = describe.MODAL_PAGE_ID
+	pages.SwitchToPage(describe.MODAL_PAGE_ID)
+
+	header.ContextShortcutView.Clear()
+	app.SetFocus(describeModal)
 }
