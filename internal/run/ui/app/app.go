@@ -98,32 +98,11 @@ func initializeApp() {
 
 // buildLayout constructs the main application UI
 func buildLayout() *tview.Flex {
-	// Modals
-	projectModal = project.ProjectModal(app, func(selectedProject model_project.Project) {
-		currentInfo.Project = selectedProject.Name
-		header.UpdateInfo(currentInfo)
-		switchTo(previousPageID)
-	}, func() {
-		switchTo(service.LIST_PAGE_ID)
-	})
-
-	regionModal = region.RegionModal(app, func(selectedRegion string) {
-		currentInfo.Region = selectedRegion
-		header.UpdateInfo(currentInfo)
-		switchTo(previousPageID)
-	}, func() {
-		switchTo(service.LIST_PAGE_ID)
-	})
-
 	pages = tview.NewPages()
 	// Lists
 	pages.AddPage(service.LIST_PAGE_ID, service.List(app).Table, true, true)
 	pages.AddPage(job.LIST_PAGE_ID, job.List(app).Table, true, true)
 	pages.AddPage(workerpool.LIST_PAGE_ID, workerpool.List(app).Table, true, true)
-
-	// Modals to Pages
-	pages.AddPage(project.MODAL_PAGE_ID, projectModal, true, true)
-	pages.AddPage(region.MODAL_PAGE_ID, regionModal, true, true)
 
 	// Footer (Spinner & Error)
 	errorView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter)
@@ -164,11 +143,11 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 
 	// Modals.
 	if event.Key() == project.MODAL_PAGE_SHORTCUT {
-		switchTo(project.MODAL_PAGE_ID)
+		openProjectModal()
 		return nil
 	}
 	if event.Key() == region.MODAL_PAGE_SHORTCUT {
-		switchTo(region.MODAL_PAGE_ID)
+		openRegionModal()
 		return nil
 	}
 
@@ -260,13 +239,45 @@ func switchTo(pageID string) {
 		workerpool.Shortcuts()
 		showLoading()
 		workerpool.ListReload(app, currentInfo, callback)
-	case project.MODAL_PAGE_ID:
-		header.ContextShortcutView.Clear()
-		app.SetFocus(projectModal)
-	case region.MODAL_PAGE_ID:
-		header.ContextShortcutView.Clear()
-		app.SetFocus(regionModal)
 	}
+}
+
+func openProjectModal() {
+	projectModal = project.ProjectModal(app, func(selectedProject model_project.Project) {
+		currentInfo.Project = selectedProject.Name
+		header.UpdateInfo(currentInfo)
+	}, func() {
+		pages.RemovePage(project.MODAL_PAGE_ID)
+		switchTo(previousPageID)
+	})
+
+	pages.AddPage(project.MODAL_PAGE_ID, projectModal, true, true)
+
+	previousPageID = currentPageID
+	currentPageID = project.MODAL_PAGE_ID
+	pages.SwitchToPage(project.MODAL_PAGE_ID)
+
+	header.ContextShortcutView.Clear()
+	app.SetFocus(projectModal)
+}
+
+func openRegionModal() {
+	regionModal = region.RegionModal(app, func(selectedRegion string) {
+		currentInfo.Region = selectedRegion
+		header.UpdateInfo(currentInfo)
+	}, func() {
+		pages.RemovePage(region.MODAL_PAGE_ID)
+		switchTo(previousPageID)
+	})
+
+	pages.AddPage(region.MODAL_PAGE_ID, regionModal, true, true)
+
+	previousPageID = currentPageID
+	currentPageID = region.MODAL_PAGE_ID
+	pages.SwitchToPage(region.MODAL_PAGE_ID)
+
+	header.ContextShortcutView.Clear()
+	app.SetFocus(regionModal)
 }
 
 func openLogModal(name, region, logType string) {
