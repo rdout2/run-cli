@@ -65,7 +65,7 @@ func RegionModal(app *tview.Application, onSelect func(region string), closeModa
 			selection := filteredRegions[idx]
 			// Handle "All Regions" special case
 			if selection == "- (All Regions)" {
-				onSelect("-")
+				onSelect(api_region.ALL)
 			} else {
 				onSelect(selection)
 			}

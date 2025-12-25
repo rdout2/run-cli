@@ -16,9 +16,9 @@ import (
 )
 
 // List returns a list of services for the given project and region.
-// If region is "-", it lists services from all supported Cloud Run regions.
+// If region is api_region.ALL, it lists services from all supported Cloud Run regions.
 func List(project, region string) ([]model.Service, error) {
-	if region == "-" {
+	if region == api_region.ALL {
 		return listAllRegions(project)
 	}
 

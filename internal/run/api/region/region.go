@@ -1,5 +1,8 @@
 package region
 
+// Represents all regions.
+const ALL = "all"
+
 // List returns a list of supported Cloud Run regions.
 func List() []string {
 	return []string{

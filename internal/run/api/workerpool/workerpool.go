@@ -16,9 +16,9 @@ import (
 )
 
 // List returns a list of worker pools for the given project and region.
-// If region is "-", it lists worker pools from all supported Cloud Run regions.
+// If region is api_region.ALL, it lists worker pools from all supported Cloud Run regions.
 func List(project, region string) ([]model.WorkerPool, error) {
-	if region == "-" {
+	if region == api_region.ALL {
 		return listAllRegions(project)
 	}
 

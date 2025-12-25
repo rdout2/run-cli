@@ -13,7 +13,7 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/project"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/region"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/service"
-	"github.com/JulienBreux/run-cli/internal/run/ui/app/worker"
+	"github.com/JulienBreux/run-cli/internal/run/ui/app/workerpool"
 	"github.com/JulienBreux/run-cli/internal/run/ui/component/loader"
 	"github.com/JulienBreux/run-cli/internal/run/ui/component/spinner"
 	"github.com/JulienBreux/run-cli/internal/run/ui/header"
@@ -119,7 +119,7 @@ func buildLayout() *tview.Flex {
 	// Lists
 	pages.AddPage(service.LIST_PAGE_ID, service.List(app).Table, true, true)
 	pages.AddPage(job.LIST_PAGE_ID, job.List(app).Table, true, true)
-	pages.AddPage(worker.LIST_PAGE_ID, worker.List(app).Table, true, true)
+	pages.AddPage(workerpool.LIST_PAGE_ID, workerpool.List(app).Table, true, true)
 
 	// Modals to Pages
 	pages.AddPage(project.MODAL_PAGE_ID, projectModal, true, true)
@@ -157,8 +157,8 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 		switchTo(job.LIST_PAGE_ID)
 		return nil
 	}
-	if event.Key() == worker.LIST_PAGE_SHORTCUT {
-		switchTo(worker.LIST_PAGE_ID)
+	if event.Key() == workerpool.LIST_PAGE_SHORTCUT {
+		switchTo(workerpool.LIST_PAGE_ID)
 		return nil
 	}
 
@@ -209,9 +209,9 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 	}
 
 	// Worker List
-	if currentPageID == worker.LIST_PAGE_ID {
+	if currentPageID == workerpool.LIST_PAGE_ID {
 		if event.Rune() == 'd' {
-			if w := worker.GetSelectedWorkerPoolFull(); w != nil {
+			if w := workerpool.GetSelectedWorkerPoolFull(); w != nil {
 				openDescribeModal(w, w.Name)
 			}
 			return nil
@@ -256,10 +256,10 @@ func switchTo(pageID string) {
 		job.Shortcuts()
 		showLoading()
 		job.ListReload(app, currentInfo, callback)
-	case worker.LIST_PAGE_ID:
-		worker.Shortcuts()
+	case workerpool.LIST_PAGE_ID:
+		workerpool.Shortcuts()
 		showLoading()
-		worker.ListReload(app, currentInfo, callback)
+		workerpool.ListReload(app, currentInfo, callback)
 	case project.MODAL_PAGE_ID:
 		header.ContextShortcutView.Clear()
 		app.SetFocus(projectModal)

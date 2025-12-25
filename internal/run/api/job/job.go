@@ -17,9 +17,9 @@ import (
 )
 
 // List returns a list of jobs for the given project and region.
-// If region is "-", it lists jobs from all supported Cloud Run regions.
+// If region is api_region.ALL, it lists jobs from all supported Cloud Run regions.
 func List(project, region string) ([]model.Job, error) {
-	if region == "-" {
+	if region == api_region.ALL {
 		return listAllRegions(project)
 	}
 
