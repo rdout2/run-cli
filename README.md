@@ -1,13 +1,3 @@
-<div align="center">
-
-```
- ____  _   _ _   _
-|  _ \| | | | \ | |
-| |_) | | | |  \| |
-|  _ <| |_| | . ` |
-|_| \_\_____|_| \_|
-```
-
 # Run CLI
 
 **Run CLI** is an interactive CLI to manage your Google Cloud Run resources with panache!
