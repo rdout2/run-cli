@@ -19,6 +19,7 @@ var (
 	listHeaders = []string{
 		"SERVICE",
 		"REGION",
+		"SCALING",
 		"URL",
 		"LAST DEPLOYED BY",
 		"LAST DEPLOYED AT"}
@@ -26,6 +27,7 @@ var (
 	listExpansions = []int{
 		2, // SERVICE
 		1, // REGION
+		1, // SCALING
 		4, // URL
 		2, // LAST DEPLOYED BY
 		1, // LAST DEPLOYED AT
@@ -71,11 +73,26 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 
 			for i, s := range services {
 				row := i + 1 // +1 for header row
+
+				scaling := "n/a"
+				if s.Scaling != nil {
+					switch s.Scaling.ScalingMode {
+					case "AUTOMATIC":
+						scaling = fmt.Sprintf("Auto: min %d", s.Scaling.MinInstances)
+						if s.Scaling.MaxInstances != 0 {
+							scaling += fmt.Sprintf(", max %d", s.Scaling.MaxInstances)
+						}
+					case "MANUAL":
+						scaling = fmt.Sprintf("Manual: %d", s.Scaling.ManualInstanceCount)
+					}
+				}
+
 				listTable.Table.SetCell(row, 0, tview.NewTableCell(s.Name))
 				listTable.Table.SetCell(row, 1, tview.NewTableCell(s.Region))
-				listTable.Table.SetCell(row, 2, tview.NewTableCell(s.URI))
-				listTable.Table.SetCell(row, 3, tview.NewTableCell(s.LastModifier))
-				listTable.Table.SetCell(row, 4, tview.NewTableCell(humanize.Time(s.UpdateTime)))
+				listTable.Table.SetCell(row, 2, tview.NewTableCell(scaling))
+				listTable.Table.SetCell(row, 3, tview.NewTableCell(s.URI))
+				listTable.Table.SetCell(row, 4, tview.NewTableCell(s.LastModifier))
+				listTable.Table.SetCell(row, 5, tview.NewTableCell(humanize.Time(s.UpdateTime)))
 			}
 
 			// Refresh title
@@ -90,8 +107,8 @@ func GetSelectedServiceURL() string {
 	if row == 0 { // Header row
 		return ""
 	}
-	// URL is now at index 2 (0: Service, 1: Region, 2: URL)
-	cell := listTable.Table.GetCell(row, 2)
+	// URL is now at index 3 (0: Service, 1: Region, 2: Scaling, 3: URL)
+	cell := listTable.Table.GetCell(row, 3)
 	return cell.Text
 }
 

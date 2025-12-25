@@ -10,6 +10,7 @@ import (
 	"cloud.google.com/go/run/apiv2/runpb"
 	api_region "github.com/JulienBreux/run-cli/internal/run/api/region"
 	model "github.com/JulienBreux/run-cli/internal/run/model/service"
+	model_scaling "github.com/JulienBreux/run-cli/internal/run/model/service/scaling"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -66,12 +67,31 @@ func List(project, region string) ([]model.Service, error) {
 			lastModifier = resp.Creator
 		}
 
+		s := model_scaling.Scaling{
+			ScalingMode: "AUTOMATIC",
+		}
+		if resp.Scaling != nil {
+			switch resp.Scaling.ScalingMode {
+			case runpb.ServiceScaling_AUTOMATIC:
+				s.ScalingMode = "AUTOMATIC"
+				s.MinInstances = resp.Scaling.MinInstanceCount
+			case runpb.ServiceScaling_MANUAL:
+				s.ScalingMode = "MANUAL"
+				if resp.Scaling.ManualInstanceCount != nil {
+					s.ManualInstanceCount = *resp.Scaling.ManualInstanceCount
+				}
+			}
+			s.MinInstances = resp.Scaling.MinInstanceCount
+			s.MaxInstances = resp.Scaling.MaxInstanceCount
+		}
+
 		services = append(services, model.Service{
 			Name:         name,
 			URI:          resp.Uri,
 			LastModifier: lastModifier,
 			UpdateTime:   resp.UpdateTime.AsTime(),
-			Region:       region, // Add region here
+			Region:       region,
+			Scaling:      &s,
 		})
 	}
 
