@@ -168,7 +168,8 @@ func HandleShortcuts(event *tcell.EventKey) *tcell.EventKey {
 
 func Shortcuts() {
 	header.ContextShortcutView.Clear()
-	shortcuts := `[dodgerblue]<d> [white]Describe
+	shortcuts := `[dodgerblue]<r> [white]Refresh
+[dodgerblue]<d> [white]Describe
 [dodgerblue]<l> [white]Logs
 [dodgerblue]<s> [white]Scale
 [dodgerblue]<o> [white]Open URL`

@@ -124,7 +124,8 @@ func GetSelectedJobFull() *model_job.Job {
 
 func Shortcuts() {
 	header.ContextShortcutView.Clear()
-	shortcuts := `[dodgerblue]<d> [white]Describe
+	shortcuts := `[dodgerblue]<r> [white]Refresh
+[dodgerblue]<d> [white]Describe
 [dodgerblue]<l> [white]Logs`
 	header.ContextShortcutView.SetText(shortcuts)
 }

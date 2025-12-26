@@ -164,6 +164,10 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 
 	// Open URL for Service list
 	if currentPageID == service.LIST_PAGE_ID {
+		if event.Rune() == 'r' {
+			switchTo(service.LIST_PAGE_ID)
+			return nil
+		}
 		if event.Rune() == 'l' {
 			name, region := service.GetSelectedService()
 			if name != "" {
@@ -190,6 +194,10 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 
 	// Job List
 	if currentPageID == job.LIST_PAGE_ID {
+		if event.Rune() == 'r' {
+			switchTo(job.LIST_PAGE_ID)
+			return nil
+		}
 		if event.Rune() == 'l' {
 			name, region := job.GetSelectedJob()
 			if name != "" {
@@ -206,6 +214,10 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 
 	// Worker List
 	if currentPageID == workerpool.LIST_PAGE_ID {
+		if event.Rune() == 'r' {
+			switchTo(workerpool.LIST_PAGE_ID)
+			return nil
+		}
 		if event.Rune() == 'd' {
 			if w := workerpool.GetSelectedWorkerPoolFull(); w != nil {
 				openDescribeModal(w, w.Name)

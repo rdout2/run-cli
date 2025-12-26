@@ -113,6 +113,7 @@ func GetSelectedWorkerPoolFull() *model_workerpool.WorkerPool {
 
 func Shortcuts() {
 	header.ContextShortcutView.Clear()
-	shortcuts := `[dodgerblue]<d> [white]Describe`
+	shortcuts := `[dodgerblue]<r> [white]Refresh
+[dodgerblue]<d> [white]Describe`
 	header.ContextShortcutView.SetText(shortcuts)
 }
