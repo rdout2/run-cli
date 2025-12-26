@@ -1,5 +1,9 @@
 # Run CLI
 
+<p align="center">
+  <a href="https://github.com/JulienBreux/run-cli" target="_blank"><img src="docs/assets/run.gif" /></a>
+</p>
+
 **Run CLI** is an interactive CLI to manage your Google Cloud Run resources with panache!
 
 [![Go version](https://img.shields.io/github/go-mod/go-version/JulienBreux/run-cli)](https://go.dev/)
