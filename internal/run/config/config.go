@@ -45,7 +45,7 @@ func Load() (*Config, error) {
 
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot unmarshal config: %w", err)
 	}
 
 	return &config, nil
@@ -56,6 +56,13 @@ func (c *Config) Save() error {
 	configPath, err := GetConfigPath()
 	if err != nil {
 		return err
+	}
+
+	configDir := filepath.Dir(configPath)
+	if _, err := os.Stat(configDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(configDir, 0755); err != nil {
+			return fmt.Errorf("failed to create config directory: %w", err)
+		}
 	}
 
 	data, err := yaml.Marshal(c)
