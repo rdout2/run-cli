@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/JulienBreux/run-cli/internal/run/auth"
+	"github.com/JulienBreux/run-cli/internal/run/config"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	model_project "github.com/JulienBreux/run-cli/internal/run/model/common/project"
 	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
@@ -31,6 +32,7 @@ var (
 	previousPageID string
 	currentPageID  string
 	currentInfo    info.Info
+	currentConfig  *config.Config
 
 	projectModal tview.Primitive
 	regionModal  tview.Primitive
@@ -49,7 +51,8 @@ const (
 )
 
 // Run runs the application.
-func Run() error {
+func Run(cfg *config.Config) error {
+	currentConfig = cfg
 	app = tview.NewApplication()
 	app.SetInputCapture(shortcuts)
 
@@ -57,7 +60,7 @@ func Run() error {
 	currentInfo = info.Info{
 		User:    "Guest",
 		Project: "None",
-		Region:  "-",
+		Region:  "all",
 	}
 
 	// Root Pages (Loader vs App)
@@ -65,14 +68,14 @@ func Run() error {
 	rootPages.AddPage(LOADER_PAGE_ID, loader.New(), true, true)
 
 	// Start initialization in background
-	go initializeApp()
+	go initializeApp(cfg)
 
 	return app.SetRoot(rootPages, FULLSCREEN).
 		EnableMouse(ENABLE_MOUSE).
 		Run()
 }
 
-func initializeApp() {
+func initializeApp(cfg *config.Config) {
 	// Simulate a small delay or just wait for heavy lifting
 	// This helps the UI render the loader first
 	time.Sleep(100 * time.Millisecond)
@@ -82,6 +85,13 @@ func initializeApp() {
 		currentInfo.User = realInfo.User
 		currentInfo.Project = realInfo.Project
 		currentInfo.Region = realInfo.Region
+	}
+
+	if cfg.Region != "" {
+		currentInfo.Region = cfg.Region
+	}
+	if cfg.Project != "" {
+		currentInfo.Project = cfg.Project
 	}
 
 	app.QueueUpdateDraw(func() {
@@ -252,6 +262,11 @@ func switchTo(pageID string) {
 func openProjectModal() {
 	projectModal = project.ProjectModal(app, func(selectedProject model_project.Project) {
 		currentInfo.Project = selectedProject.Name
+		currentConfig.Project = selectedProject.Name
+		if err := currentConfig.Save(); err != nil {
+			showError(err)
+			return
+		}
 		header.UpdateInfo(currentInfo)
 	}, func() {
 		pages.RemovePage(project.MODAL_PAGE_ID)
@@ -271,6 +286,11 @@ func openProjectModal() {
 func openRegionModal() {
 	regionModal = region.RegionModal(app, func(selectedRegion string) {
 		currentInfo.Region = selectedRegion
+		currentConfig.Region = selectedRegion
+		if err := currentConfig.Save(); err != nil {
+			showError(err)
+			return
+		}
 		header.UpdateInfo(currentInfo)
 	}, func() {
 		pages.RemovePage(region.MODAL_PAGE_ID)
