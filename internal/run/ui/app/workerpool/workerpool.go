@@ -79,7 +79,7 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 			for i, w := range workers {
 				var labels []string
 				for k, v := range w.Labels {
-					labels = append(labels, fmt.Sprintf("%s=%s", k, v))
+					labels = append(labels, fmt.Sprintf("%s: %s", k, v))
 				}
 
 				scaling := "n/a"

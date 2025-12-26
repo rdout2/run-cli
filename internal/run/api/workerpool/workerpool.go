@@ -77,7 +77,7 @@ func List(project, region string) ([]model.WorkerPool, error) {
 			LastModifier: resp.LastModifier,
 			Region:       region,
 			Scaling:      &s,
-			Labels:       resp.Annotations,
+			Labels:       resp.Labels,
 		})
 	}
 

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	MODAL_PAGE_ID = "describe"
+	MODAL_PAGE_ID = "modal-describes"
 
 	defaultHighlightLexer     = "yaml"
 	defaultHighlightStyle     = "solarized-dark"
