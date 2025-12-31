@@ -18,33 +18,63 @@ const (
 
 // Modal returns a modal primitive for scaling a service.
 func Modal(app *tview.Application, service *model_service.Service, pages *tview.Pages, onCompletion func()) tview.Primitive {
-	// Main form
-	form := tview.NewForm()
-	form.SetBorder(true)
-	form.SetTitle("Service Scaling")
+	// --- Styles ---
+	fieldBackgroundColor := tcell.ColorBlack
+	fieldTextColor := tcell.ColorWhite
+	labelColor := tcell.ColorYellow
+	buttonBgColor := tcell.ColorDarkCyan
+	buttonTextColor := tcell.ColorWhite
+
+	// --- Components ---
 
 	// Status text view for feedback
 	statusTextView := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
+	// Container for Form + Status
+	container := tview.NewFlex().SetDirection(tview.FlexRow)
+	container.SetBorder(true).
+		SetTitle(" Scale Service ").
+		SetTitleAlign(tview.AlignCenter)
+
+	// Form
+	form := tview.NewForm()
+	form.SetBorder(false)
+	form.SetLabelColor(labelColor)
+	form.SetFieldBackgroundColor(fieldBackgroundColor)
+	form.SetFieldTextColor(fieldTextColor)
+	form.SetButtonBackgroundColor(buttonBgColor)
+	form.SetButtonTextColor(buttonTextColor)
+
+	// Fields helper
+	styleField := func(f *tview.InputField) {
+		f.SetFieldBackgroundColor(fieldBackgroundColor)
+		f.SetFieldTextColor(fieldTextColor)
+	}
+
 	// Create form items
 	var manualInstancesField, minInstancesField, maxInstancesField *tview.InputField
 	modeDropdown := tview.NewDropDown().
 		SetLabel("Scaling mode").
-		SetOptions([]string{"Automatic", "Manual"}, nil)
+		SetOptions([]string{"Automatic", "Manual"}, nil).
+		SetFieldBackgroundColor(fieldBackgroundColor).
+		SetListStyles(tcell.StyleDefault.Background(tcell.ColorDarkGray), tcell.StyleDefault.Background(tcell.ColorLightCyan).Foreground(tcell.ColorBlack))
 
 	manualInstancesField = tview.NewInputField().
-		SetLabel("Number of instances").
+		SetLabel("Instances").
 		SetFieldWidth(10)
+	styleField(manualInstancesField)
 
 	minInstancesField = tview.NewInputField().
-		SetLabel("Min instances").
+		SetLabel("Min Instances").
 		SetFieldWidth(10)
+	styleField(minInstancesField)
 
 	maxInstancesField = tview.NewInputField().
-		SetLabel("Max instances (optional)").
+		SetLabel("Max Instances").
 		SetFieldWidth(10)
+	styleField(maxInstancesField)
 
 	// Function to update form based on selected mode
 	updateForm := func() {
@@ -102,7 +132,7 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 
 		// Call API
 		go func() {
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 			defer cancel()
 
 			_, err := api_service.UpdateScaling(ctx, service.Project, service.Region, service.Name, min, max, manual)
@@ -118,6 +148,14 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 	form.AddButton("Cancel", func() {
 		onCompletion()
 	})
+
+	// Style Buttons (Hack: tview.Form doesn't expose buttons directly by name, so we access by index)
+	// Button 0: Save (Green)
+	// Button 1: Cancel (Red)
+	if form.GetButtonCount() >= 2 {
+		form.GetButton(0).SetBackgroundColor(tcell.ColorDarkGreen)
+		form.GetButton(1).SetBackgroundColor(tcell.ColorDarkRed)
+	}
 
 	// Dropdown selection handler
 	modeDropdown.SetSelectedFunc(func(text string, index int) {
@@ -149,18 +187,22 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 
 	updateForm() // Initial form setup
 
-	// Modal layout
-	modal := tview.NewFlex().
-		AddItem(nil, 0, 1, false).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(nil, 0, 1, false).
-			AddItem(form, 15, 1, true).
-			AddItem(statusTextView, 2, 1, false).
-			AddItem(nil, 0, 1, false), 80, 1, true).
-		AddItem(nil, 0, 1, false)
+	// --- Layout ---
 
-	// Capture escape key
-	modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// Assemble Container
+	container.AddItem(form, 0, 1, true)
+	container.AddItem(statusTextView, 1, 0, false)
+
+	// Centering with Grid
+	// Columns: auto, 50, auto (Centered width 50)
+	// Rows: auto, 15, auto (Centered height 15)
+	grid := tview.NewGrid().
+		SetColumns(0, 50, 0).
+		SetRows(0, 15, 0).
+		AddItem(container, 1, 1, 1, 1, 0, 0, true)
+
+	// Capture escape key on the Container
+	container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			onCompletion()
 			return nil
@@ -168,5 +210,5 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 		return event
 	})
 
-	return modal
+	return grid
 }
