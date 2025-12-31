@@ -112,3 +112,38 @@ func listAllRegions(project string) ([]model.Job, error) {
 	wg.Wait()
 	return jobs, nil
 }
+
+// Execute executes a Cloud Run job.
+func Execute(project, region, jobName string) (*runpb.Execution, error) {
+	ctx := context.Background()
+
+	// Explicitly find default credentials
+	creds, err := google.FindDefaultCredentials(ctx, run.DefaultAuthScopes()...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find default credentials: %w", err)
+	}
+
+	c, err := run.NewJobsClient(ctx, option.WithCredentials(creds))
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = c.Close()
+	}()
+
+	req := &runpb.RunJobRequest{
+		Name: fmt.Sprintf("projects/%s/locations/%s/jobs/%s", project, region, jobName),
+	}
+
+	op, err := c.RunJob(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := op.Wait(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}

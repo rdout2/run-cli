@@ -6,6 +6,7 @@ import (
 
 	"github.com/JulienBreux/run-cli/internal/run/auth"
 	"github.com/JulienBreux/run-cli/internal/run/config"
+	api_job "github.com/JulienBreux/run-cli/internal/run/api/job"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/job"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/project"
@@ -204,6 +205,24 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 			if j := job.GetSelectedJobFull(); j != nil {
 				openDescribeModal(j, j.Name)
 			}
+			return nil
+		}
+		if event.Rune() == 'x' {
+			name, region := job.GetSelectedJob()
+			if name != "" {
+				showLoading()
+				go func() {
+					_, err := api_job.Execute(currentInfo.Project, region, name)
+					app.QueueUpdateDraw(func() {
+						if err != nil {
+							showError(err)
+						} else {
+							switchTo(job.LIST_PAGE_ID)
+						}
+					})
+				}()
+			}
+			return nil
 		}
 	}
 

@@ -126,6 +126,7 @@ func Shortcuts() {
 	header.ContextShortcutView.Clear()
 	shortcuts := `[dodgerblue]<r> [white]Refresh
 [dodgerblue]<d> [white]Describe
-[dodgerblue]<l> [white]Logs`
+[dodgerblue]<l> [white]Logs
+[dodgerblue]<x> [white]Execute`
 	header.ContextShortcutView.SetText(shortcuts)
 }
