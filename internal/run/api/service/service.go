@@ -11,6 +11,7 @@ import (
 	api_region "github.com/JulienBreux/run-cli/internal/run/api/region"
 	model "github.com/JulienBreux/run-cli/internal/run/model/service"
 	model_scaling "github.com/JulienBreux/run-cli/internal/run/model/service/scaling"
+	model_traffic "github.com/JulienBreux/run-cli/internal/run/model/service/traffic"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -68,6 +69,22 @@ func List(project, region string) ([]model.Service, error) {
 			lastModifier = resp.Creator
 		}
 
+		var trafficStatuses []*model_traffic.TrafficTargetStatus
+		for _, ts := range resp.TrafficStatuses {
+			revName := ts.Revision
+			if strings.Contains(revName, "/") {
+				parts := strings.Split(revName, "/")
+				revName = parts[len(parts)-1]
+			}
+			trafficStatuses = append(trafficStatuses, &model_traffic.TrafficTargetStatus{
+				Type:     ts.Type.String(),
+				Revision: revName,
+				Percent:  ts.Percent,
+				Tag:      ts.Tag,
+				URI:      ts.Uri,
+			})
+		}
+
 		s := model_scaling.Scaling{
 			ScalingMode: "AUTOMATIC",
 		}
@@ -86,14 +103,29 @@ func List(project, region string) ([]model.Service, error) {
 			s.MaxInstances = resp.Scaling.MaxInstanceCount
 		}
 
+		latestReadyRevision := resp.LatestReadyRevision
+		if strings.Contains(latestReadyRevision, "/") {
+			parts := strings.Split(latestReadyRevision, "/")
+			latestReadyRevision = parts[len(parts)-1]
+		}
+
+		latestCreatedRevision := resp.LatestCreatedRevision
+		if strings.Contains(latestCreatedRevision, "/") {
+			parts := strings.Split(latestCreatedRevision, "/")
+			latestCreatedRevision = parts[len(parts)-1]
+		}
+
 		services = append(services, model.Service{
-			Name:         name,
-			URI:          resp.Uri,
-			LastModifier: lastModifier,
-			UpdateTime:   resp.UpdateTime.AsTime(),
-			Region:       region,
-			Scaling:      &s,
-			Project:      project,
+			Name:                  name,
+			URI:                   resp.Uri,
+			LastModifier:          lastModifier,
+			UpdateTime:            resp.UpdateTime.AsTime(),
+			Region:                region,
+			Scaling:               &s,
+			Project:               project,
+			TrafficStatuses:       trafficStatuses,
+			LatestReadyRevision:   latestReadyRevision,
+			LatestCreatedRevision: latestCreatedRevision,
 		})
 	}
 

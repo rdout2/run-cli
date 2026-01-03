@@ -23,4 +23,9 @@ type Revision struct {
 	ObservedGeneration   int64                  `json:"observedGeneration"`
 	LogURI               string                 `json:"logUri"`
 	Etag                 string                 `json:"etag"`
+	// New fields
+	MaxInstanceRequestConcurrency int32         `json:"maxInstanceRequestConcurrency"`
+	Timeout                       time.Duration `json:"timeout"`
+	CpuIdle                       bool          `json:"cpuIdle"`
+	StartupCpuBoost               bool          `json:"startupCpuBoost"`
 }

@@ -114,6 +114,9 @@ func buildLayout() *tview.Flex {
 	pages.AddPage(job.LIST_PAGE_ID, job.List(app).Table, true, true)
 	pages.AddPage(workerpool.LIST_PAGE_ID, workerpool.List(app).Table, true, true)
 
+	// Dashboards
+	pages.AddPage(service.DASHBOARD_PAGE_ID, service.Dashboard(app), true, false)
+
 	// Footer (Spinner & Error)
 	errorView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter)
 	footerPages = tview.NewPages()
@@ -140,7 +143,7 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 	// Navigation.
 	if event.Key() == tcell.KeyCtrlZ {
 		u := fmt.Sprintf(CONSOLE_URL, currentInfo.Project)
-		url.OpenInBrowser(u)
+		_ = url.OpenInBrowser(u)
 		return nil
 	}
 	if event.Key() == service.LIST_PAGE_SHORTCUT {
@@ -166,8 +169,19 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 
+	if event.Key() == tcell.KeyEscape {
+		if currentPageID == service.DASHBOARD_PAGE_ID {
+			switchTo(service.LIST_PAGE_ID)
+			return nil
+		}
+	}
+
 	// Open URL for Service list
 	if currentPageID == service.LIST_PAGE_ID {
+		if event.Key() == tcell.KeyEnter {
+			switchTo(service.DASHBOARD_PAGE_ID)
+			return nil
+		}
 		if event.Rune() == 'r' {
 			switchTo(service.LIST_PAGE_ID)
 			return nil
@@ -288,6 +302,12 @@ func switchTo(pageID string) {
 		service.Shortcuts()
 		showLoading()
 		service.ListReload(app, currentInfo, callback)
+	case service.DASHBOARD_PAGE_ID:
+		if s := service.GetSelectedServiceFull(); s != nil {
+			service.DashboardShortcuts()
+			showLoading()
+			service.DashboardReload(app, currentInfo, s, callback)
+		}
 	case job.LIST_PAGE_ID:
 		job.Shortcuts()
 		showLoading()
