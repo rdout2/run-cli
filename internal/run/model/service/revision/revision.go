@@ -28,4 +28,5 @@ type Revision struct {
 	Timeout                       time.Duration `json:"timeout"`
 	CpuIdle                       bool          `json:"cpuIdle"`
 	StartupCpuBoost               bool          `json:"startupCpuBoost"`
+	Accelerator                   string        `json:"accelerator"`
 }

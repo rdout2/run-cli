@@ -159,6 +159,38 @@ func updateRevisionDetail(row int) {
 	}
 	fmt.Fprintf(&sb, "[lightcyan]Execution environment:[white] %s\n", execEnv)
 
+	fmt.Fprintln(&sb, "")
+	fmt.Fprintln(&sb, "[yellow::b]Containers[white::-]")
+	for i, c := range rev.Containers {
+		name := c.Name
+		if name == "" {
+			name = fmt.Sprintf("container-%d", i+1)
+		}
+		fmt.Fprintf(&sb, "[lightcyan]%s[white]\n", name)
+		fmt.Fprintf(&sb, "  [lightcyan]Image:[white] %s\n", c.Image)
+		
+		if len(c.Ports) > 0 {
+			fmt.Fprintf(&sb, "  [lightcyan]Port:[white] %d\n", c.Ports[0].ContainerPort)
+		}
+		
+		if c.Resources != nil && len(c.Resources.Limits) > 0 {
+			mem := c.Resources.Limits["memory"]
+			cpu := c.Resources.Limits["cpu"]
+			gpu := c.Resources.Limits["nvidia.com/gpu"]
+			
+			resStr := fmt.Sprintf("%s Memory, %s CPU", mem, cpu)
+			if gpu != "" {
+				gpuStr := gpu + " GPU"
+				if rev.Accelerator != "" {
+					gpuStr += " (" + rev.Accelerator + ")"
+				}
+				resStr += ", " + gpuStr
+			}
+			fmt.Fprintf(&sb, "  [lightcyan]Resources:[white] %s\n", resStr)
+		}
+		fmt.Fprintln(&sb, "")
+	}
+
 	revisionsDetail.SetText(sb.String())
 }
 
