@@ -16,6 +16,10 @@
 
 *   **Interactive TUI:** A user-friendly terminal interface to manage your Cloud Run resources.
 *   **Service Management:** View, search, and manage your Cloud Run services.
+*   **Service Dashboard:** Navigate to a dedicated dashboard for each service with multiple views.
+*   **Revision Management:** Detailed list of revisions with traffic allocation, tags, and deployment history.
+*   **Deep Insights:** Explore revision details including billing mode, startup CPU boost, concurrency, and request timeouts.
+*   **Resource Monitoring:** View container configurations, images, ports, and resource limits (Memory, CPU, and GPU/Accelerators).
 *   **Job Management:** Monitor and manage your Cloud Run jobs.
 *   **Log Viewer:** Stream logs from your services directly in the terminal.
 *   **Project & Region Selection:** Easily switch between your Google Cloud projects and regions.
