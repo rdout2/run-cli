@@ -12,7 +12,7 @@
 *   **Architecture:**
     *   `cmd/run/`: Contains the main entry point (`main.go`).
     *   `internal/run/command/`: Handles the CLI command definitions and initialization.
-    *   `internal/run/ui/`: Contains the UI logic, including application layout (`app`), pages (`service`, `job`, `worker`), and components (`header`, `table`, `modals`).
+    *   `internal/run/tui/`: Contains the terminal UI logic, including application layout (`app`), pages (`service`, `job`, `worker`), and components (`header`, `table`, `modals`).
     *   `internal/run/model/`: Defines the data models used across the application (e.g., `service`, `job`, `info`).
 
 ## Building and Running
@@ -47,7 +47,7 @@ The project uses a `Makefile` to automate common development tasks.
 
 ## Development Conventions
 
-*   **Project Structure:** Follows standard Go project layout with `cmd` for executables and `internal` for private library code.
+*   **Project Structure:** Follows standard Go project layout with `cmd` for executables and `internal` for private library code. The `pkg` is used for public libraries.
 *   **Linting:** `golangci-lint` is used to enforce code style and quality. Ensure `make lint` passes before committing.
 *   **Testing:** Unit tests are encouraged. Use `make test` to verify changes.
-*   **UI Components:** The UI is modularized in `internal/run/ui`. New pages or components should be added there and registered in `internal/run/ui/app/app.go`.
+*   **UI Components:** The UI is modularized in `internal/run/tui`. New pages or components should be added there and registered in `internal/run/tui/app/app.go`.
