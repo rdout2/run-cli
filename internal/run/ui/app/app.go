@@ -35,6 +35,7 @@ var (
 	regionModal  tview.Primitive
 
 	footerPages *tview.Pages
+	footerSpinner *spinner.Spinner
 	errorView   *tview.TextView
 )
 
@@ -121,7 +122,10 @@ func buildLayout() *tview.Flex {
 	errorView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter)
 	footerPages = tview.NewPages()
 	footerPages.AddPage("empty", tview.NewBox(), true, true)
-	footerPages.AddPage("loading", spinner.New(app), true, false)
+
+	footerSpinner = spinner.New(app)
+	footerPages.AddPage("loading", footerSpinner, true, false)
+	
 	footerPages.AddPage("error", errorView, true, false)
 
 	layout := tview.NewFlex().SetDirection(tview.FlexRow).
@@ -272,10 +276,12 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func showLoading() {
+	footerSpinner.Start("Loading...")
 	footerPages.SwitchToPage("loading")
 }
 
 func hideLoading() {
+	footerSpinner.Stop("")
 	footerPages.SwitchToPage("empty")
 }
 

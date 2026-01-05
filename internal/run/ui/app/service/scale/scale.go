@@ -8,16 +8,18 @@ import (
 
 	api_service "github.com/JulienBreux/run-cli/internal/run/api/service"
 	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
+	"github.com/JulienBreux/run-cli/internal/run/ui/component/spinner"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
 const (
-	MODAL_PAGE_ID = "scale"
+	MODAL_PAGE_ID = "scale-service"
 )
 
 // Modal returns a modal primitive for scaling a service.
 func Modal(app *tview.Application, service *model_service.Service, pages *tview.Pages, onCompletion func()) tview.Primitive {
+
 	// --- Styles ---
 	fieldBackgroundColor := tcell.ColorBlack
 	fieldTextColor := tcell.ColorWhite
@@ -27,10 +29,9 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 
 	// --- Components ---
 
-	// Status text view for feedback
-	statusTextView := tview.NewTextView().
-		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+	// Spinner for feedback and status
+	statusSpinner := spinner.New(app)
+	statusSpinner.SetTextAlign(tview.AlignCenter)
 
 	// Container for Form + Status
 	container := tview.NewFlex().SetDirection(tview.FlexRow)
@@ -76,6 +77,29 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 		SetFieldWidth(10)
 	styleField(maxInstancesField)
 
+	// --- Layout ---
+
+	// Assemble Container
+	container.AddItem(form, 0, 1, true)
+	container.AddItem(statusSpinner, 1, 0, false)
+
+	// Centering with Grid
+	// Columns: auto, 50, auto (Centered width 50)
+	// Rows: auto, 10, auto (Centered height 10)
+	grid := tview.NewGrid().
+		SetColumns(0, 50, 0).
+		SetRows(0, 10, 0).
+		AddItem(container, 1, 1, 1, 1, 0, 0, true)
+
+	// Capture escape key on the Container
+	container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			onCompletion()
+			return nil
+		}
+		return event
+	})
+
 	// Function to update form based on selected mode
 	updateForm := func() {
 		_, mode := modeDropdown.GetCurrentOption()
@@ -84,9 +108,13 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 
 		if mode == "Manual" {
 			form.AddFormItem(manualInstancesField)
+			// Rows: auto, 10, auto (Centered height 10)
+			grid.SetRows(0, 10, 0)
 		} else { // Automatic
 			form.AddFormItem(minInstancesField)
 			form.AddFormItem(maxInstancesField)
+			// Rows: auto, 12, auto (Centered height 12)
+			grid.SetRows(0, 12, 0)
 		}
 	}
 
@@ -100,21 +128,21 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 		if mode == "Manual" {
 			manual, err = strconv.Atoi(manualInstancesField.GetText())
 			if err != nil {
-				statusTextView.SetText("[red]Invalid manual instance count")
+				statusSpinner.SetText("[red]Invalid manual instance count")
 				return
 			}
 			min, max = 0, 0
 		} else { // Automatic
 			min, err = strconv.Atoi(minInstancesField.GetText())
 			if err != nil {
-				statusTextView.SetText("[red]Invalid min instance count")
+				statusSpinner.SetText("[red]Invalid min instance count")
 				return
 			}
 
 			if maxInstancesField.GetText() != "" {
 				max, err = strconv.Atoi(maxInstancesField.GetText())
 				if err != nil {
-					statusTextView.SetText("[red]Invalid max instance count")
+					statusSpinner.SetText("[red]Invalid max instance count")
 					return
 				}
 			} else {
@@ -122,39 +150,14 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 			}
 
 			if max > 0 && min > max {
-				statusTextView.SetText("[red]Min instances cannot be greater than Max instances")
+				statusSpinner.SetText("[red]Min instances cannot be greater than Max instances")
 				return
 			}
 			manual = 0
 		}
 
-		// Animation control
-		isSaving := true
-		stopAnim := make(chan struct{})
-		go func() {
-			frames := []string{
-				"[yellow]Saving      (Please wait)",
-				"[yellow]Saving .    (Please wait)",
-				"[yellow]Saving ..   (Please wait)",
-				"[yellow]Saving ...  (Please wait)",
-			}
-			i := 0
-			ticker := time.NewTicker(500 * time.Millisecond)
-			defer ticker.Stop()
-			for {
-				select {
-				case <-stopAnim:
-					return
-				case <-ticker.C:
-					app.QueueUpdateDraw(func() {
-						if isSaving {
-							statusTextView.SetText(frames[i])
-						}
-					})
-					i = (i + 1) % len(frames)
-				}
-			}
-		}()
+		// Start Animation
+		statusSpinner.Start("[yellow]Operation in progress... (Please wait)")
 
 		// Call API
 		go func() {
@@ -163,11 +166,10 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 
 			_, err := api_service.UpdateScaling(ctx, service.Project, service.Region, service.Name, min, max, manual)
 			app.QueueUpdateDraw(func() {
-				isSaving = false
-				close(stopAnim)
 				if err != nil {
-					statusTextView.SetText(fmt.Sprintf("[red]Error: %v", err))
+					statusSpinner.Stop(fmt.Sprintf("[red]Error: %v", err))
 				} else {
+					statusSpinner.Stop("")
 					onCompletion()
 				}
 			})
@@ -214,29 +216,6 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 	}
 
 	updateForm() // Initial form setup
-
-	// --- Layout ---
-
-	// Assemble Container
-	container.AddItem(form, 0, 1, true)
-	container.AddItem(statusTextView, 1, 0, false)
-
-	// Centering with Grid
-	// Columns: auto, 50, auto (Centered width 50)
-	// Rows: auto, 15, auto (Centered height 15)
-	grid := tview.NewGrid().
-		SetColumns(0, 50, 0).
-		SetRows(0, 15, 0).
-		AddItem(container, 1, 1, 1, 1, 0, 0, true)
-
-	// Capture escape key on the Container
-	container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyEscape {
-			onCompletion()
-			return nil
-		}
-		return event
-	})
 
 	return grid
 }

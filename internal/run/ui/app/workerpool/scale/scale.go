@@ -8,6 +8,7 @@ import (
 
 	api_workerpool "github.com/JulienBreux/run-cli/internal/run/api/workerpool"
 	model_workerpool "github.com/JulienBreux/run-cli/internal/run/model/workerpool"
+	"github.com/JulienBreux/run-cli/internal/run/ui/component/spinner"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -27,10 +28,9 @@ func Modal(app *tview.Application, workerPool *model_workerpool.WorkerPool, page
 
 	// --- Components ---
 
-	// Status text view for feedback
-	statusTextView := tview.NewTextView().
-		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+	// Spinner for feedback and status
+	statusSpinner := spinner.New(app)
+	statusSpinner.SetTextAlign(tview.AlignCenter)
 
 	// Container for Form + Status
 	container := tview.NewFlex().SetDirection(tview.FlexRow)
@@ -67,37 +67,12 @@ func Modal(app *tview.Application, workerPool *model_workerpool.WorkerPool, page
 		countStr := instanceCountField.GetText()
 		count, err := strconv.Atoi(countStr)
 		if err != nil || count < 0 {
-			statusTextView.SetText("[red]Invalid instance count")
+			statusSpinner.SetText("[red]Invalid instance count")
 			return
 		}
 
-		// Animation control
-		isSaving := true
-		stopAnim := make(chan struct{})
-		go func() {
-			frames := []string{
-				"[yellow]Saving      (Please wait)",
-				"[yellow]Saving .    (Please wait)",
-				"[yellow]Saving ..   (Please wait)",
-				"[yellow]Saving ...  (Please wait)",
-			}
-			i := 0
-			ticker := time.NewTicker(500 * time.Millisecond)
-			defer ticker.Stop()
-			for {
-				select {
-				case <-stopAnim:
-					return
-				case <-ticker.C:
-					app.QueueUpdateDraw(func() {
-						if isSaving {
-							statusTextView.SetText(frames[i])
-						}
-					})
-					i = (i + 1) % len(frames)
-				}
-			}
-		}()
+		// Start Animation
+		statusSpinner.Start("[yellow]Operation in progress... (Please wait)")
 
 		// Call API
 		go func() {
@@ -106,11 +81,10 @@ func Modal(app *tview.Application, workerPool *model_workerpool.WorkerPool, page
 
 			_, err := api_workerpool.UpdateScaling(ctx, workerPool.Project, workerPool.Region, workerPool.DisplayName, count)
 			app.QueueUpdateDraw(func() {
-				isSaving = false
-				close(stopAnim)
 				if err != nil {
-					statusTextView.SetText(fmt.Sprintf("[red]Error: %v", err))
+					statusSpinner.Stop(fmt.Sprintf("[red]Error: %v", err))
 				} else {
+					statusSpinner.Stop("")
 					onCompletion()
 				}
 			})
@@ -137,14 +111,14 @@ func Modal(app *tview.Application, workerPool *model_workerpool.WorkerPool, page
 
 	// Assemble Container
 	container.AddItem(form, 0, 1, true)
-	container.AddItem(statusTextView, 1, 0, false)
+	container.AddItem(statusSpinner, 1, 0, false)
 
 	// Centering with Grid
 	// Columns: auto, 50, auto (Centered width 50)
-	// Rows: auto, 10, auto (Centered height 10 - smaller than service modal)
+	// Rows: auto, 8, auto (Centered height 8 - smaller than service modal)
 	grid := tview.NewGrid().
 		SetColumns(0, 50, 0).
-		SetRows(0, 10, 0).
+		SetRows(0, 8, 0).
 		AddItem(container, 1, 1, 1, 1, 0, 0, true)
 
 	// Capture escape key on the Container
