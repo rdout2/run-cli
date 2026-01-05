@@ -1,6 +1,7 @@
 package format_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/JulienBreux/run-cli/pkg/format"
@@ -27,4 +28,16 @@ func TestToYAMLError(t *testing.T) {
 	data := make(chan int)
 	_, err := format.ToYAML(data)
 	assert.Error(t, err)
+}
+
+type FailMarshaler struct{}
+
+func (f FailMarshaler) MarshalYAML() (interface{}, error) {
+	return nil, fmt.Errorf("expected error")
+}
+
+func TestToYAML_MarshalFail(t *testing.T) {
+	_, err := format.ToYAML(FailMarshaler{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "expected error")
 }
