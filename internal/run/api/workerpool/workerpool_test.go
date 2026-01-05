@@ -1,6 +1,7 @@
 package workerpool
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,6 +9,34 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// MockClient
+type MockClient struct {
+	ListWorkerPoolsFunc  func(ctx context.Context, project, region string) ([]*runpb.WorkerPool, error)
+	GetWorkerPoolFunc    func(ctx context.Context, name string) (*runpb.WorkerPool, error)
+	UpdateWorkerPoolFunc func(ctx context.Context, workerPool *runpb.WorkerPool) (*runpb.WorkerPool, error)
+}
+
+func (m *MockClient) ListWorkerPools(ctx context.Context, project, region string) ([]*runpb.WorkerPool, error) {
+	if m.ListWorkerPoolsFunc != nil {
+		return m.ListWorkerPoolsFunc(ctx, project, region)
+	}
+	return nil, nil
+}
+
+func (m *MockClient) GetWorkerPool(ctx context.Context, name string) (*runpb.WorkerPool, error) {
+	if m.GetWorkerPoolFunc != nil {
+		return m.GetWorkerPoolFunc(ctx, name)
+	}
+	return nil, nil
+}
+
+func (m *MockClient) UpdateWorkerPool(ctx context.Context, workerPool *runpb.WorkerPool) (*runpb.WorkerPool, error) {
+	if m.UpdateWorkerPoolFunc != nil {
+		return m.UpdateWorkerPoolFunc(ctx, workerPool)
+	}
+	return nil, nil
+}
 
 func TestMapWorkerPool(t *testing.T) {
 	now := time.Now()
@@ -39,4 +68,57 @@ func TestMapWorkerPool(t *testing.T) {
 	
 	// Labels
 	assert.Equal(t, "prod", result.Labels["env"])
+}
+
+func TestList(t *testing.T) {
+	originalClient := apiClient
+	defer func() { apiClient = originalClient }()
+
+	mock := &MockClient{}
+	apiClient = mock
+
+	mock.ListWorkerPoolsFunc = func(ctx context.Context, project, region string) ([]*runpb.WorkerPool, error) {
+		return []*runpb.WorkerPool{{Name: "pool1"}}, nil
+	}
+
+	pools, err := List("p", "r")
+	assert.NoError(t, err)
+	assert.Len(t, pools, 1)
+}
+
+func TestList_Error(t *testing.T) {
+	originalClient := apiClient
+	defer func() { apiClient = originalClient }()
+
+	mock := &MockClient{}
+	apiClient = mock
+
+	mock.ListWorkerPoolsFunc = func(ctx context.Context, project, region string) ([]*runpb.WorkerPool, error) {
+		return nil, assert.AnError
+	}
+
+	pools, err := List("p", "r")
+	assert.Error(t, err)
+	assert.Nil(t, pools)
+}
+
+func TestUpdateScaling(t *testing.T) {
+	originalClient := apiClient
+	defer func() { apiClient = originalClient }()
+
+	mock := &MockClient{}
+	apiClient = mock
+
+	mock.GetWorkerPoolFunc = func(ctx context.Context, name string) (*runpb.WorkerPool, error) {
+		return &runpb.WorkerPool{Name: name}, nil
+	}
+	mock.UpdateWorkerPoolFunc = func(ctx context.Context, workerPool *runpb.WorkerPool) (*runpb.WorkerPool, error) {
+		assert.Equal(t, int32(5), *workerPool.Scaling.ManualInstanceCount)
+		return workerPool, nil
+	}
+
+	result, err := UpdateScaling(context.Background(), "p", "r", "pool1", 5)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, int32(5), result.Scaling.ManualInstanceCount)
 }

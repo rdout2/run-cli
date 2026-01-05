@@ -2,19 +2,15 @@ package job
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"sync"
 
-	run "cloud.google.com/go/run/apiv2"
 	"cloud.google.com/go/run/apiv2/runpb"
 	api_region "github.com/JulienBreux/run-cli/internal/run/api/region"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/condition"
 	model "github.com/JulienBreux/run-cli/internal/run/model/job"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/iterator"
-	"google.golang.org/api/option"
 )
+
+var apiClient Client = &GCPClient{}
 
 // List returns a list of jobs for the given project and region.
 // If region is api_region.ALL, it lists jobs from all supported Cloud Run regions.
@@ -24,39 +20,13 @@ func List(project, region string) ([]model.Job, error) {
 	}
 
 	ctx := context.Background()
-
-	// Explicitly find default credentials
-	creds, err := google.FindDefaultCredentials(ctx, run.DefaultAuthScopes()...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find default credentials: %w. Tip: Try running 'gcloud auth application-default login' to authenticate the Go client", err)
-	}
-
-	c, err := run.NewJobsClient(ctx, option.WithCredentials(creds))
+	pbJobs, err := apiClient.ListJobs(ctx, project, region)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		_ = c.Close()
-	}()
-
-	req := &runpb.ListJobsRequest{
-		Parent: fmt.Sprintf("projects/%s/locations/%s", project, region),
-	}
 
 	var jobs []model.Job
-	it := c.ListJobs(ctx, req)
-	for {
-		resp, err := it.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			if strings.Contains(err.Error(), "Unauthenticated") || strings.Contains(err.Error(), "PermissionDenied") {
-				return nil, fmt.Errorf("authentication failed: %w. Tip: Ensure your 'gcloud auth application-default login' is valid and has permissions", err)
-			}
-			return nil, err
-		}
-
+	for _, resp := range pbJobs {
 		jobs = append(jobs, mapJob(resp, region))
 	}
 
@@ -120,34 +90,10 @@ func listAllRegions(project string) ([]model.Job, error) {
 // Execute executes a Cloud Run job.
 func Execute(project, region, jobName string) (*runpb.Execution, error) {
 	ctx := context.Background()
-
-	// Explicitly find default credentials
-	creds, err := google.FindDefaultCredentials(ctx, run.DefaultAuthScopes()...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find default credentials: %w", err)
-	}
-
-	c, err := run.NewJobsClient(ctx, option.WithCredentials(creds))
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		_ = c.Close()
-	}()
-
-	req := &runpb.RunJobRequest{
-		Name: fmt.Sprintf("projects/%s/locations/%s/jobs/%s", project, region, jobName),
-	}
-
-	op, err := c.RunJob(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := op.Wait(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	// Name format: projects/{project}/locations/{region}/jobs/{job}
+	// The client's RunJob usually takes the full name resource string or the method handles it.
+	// My GCPClient.RunJob takes just 'name'.
+	// I should construct the full name here before passing it.
+	fullName := "projects/" + project + "/locations/" + region + "/jobs/" + jobName
+	return apiClient.RunJob(ctx, fullName)
 }

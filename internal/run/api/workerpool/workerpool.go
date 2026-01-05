@@ -6,15 +6,13 @@ import (
 	"strings"
 	"sync"
 
-	run "cloud.google.com/go/run/apiv2"
 	"cloud.google.com/go/run/apiv2/runpb"
 	api_region "github.com/JulienBreux/run-cli/internal/run/api/region"
 	model "github.com/JulienBreux/run-cli/internal/run/model/workerpool"
 	model_scaling "github.com/JulienBreux/run-cli/internal/run/model/workerpool/scaling"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/iterator"
-	"google.golang.org/api/option"
 )
+
+var apiClient Client = &GCPClient{}
 
 // List returns a list of worker pools for the given project and region.
 // If region is api_region.ALL, it lists worker pools from all supported Cloud Run regions.
@@ -24,40 +22,14 @@ func List(project, region string) ([]model.WorkerPool, error) {
 	}
 
 	ctx := context.Background()
-
-	// Explicitly find default credentials
-	creds, err := google.FindDefaultCredentials(ctx, run.DefaultAuthScopes()...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find default credentials: %w. Tip: Try running 'gcloud auth application-default login' to authenticate the Go client", err)
-	}
-
-	c, err := run.NewWorkerPoolsClient(ctx, option.WithCredentials(creds))
+	pbWorkerPools, err := apiClient.ListWorkerPools(ctx, project, region)
 	if err != nil {
 		return nil, err
-	}
-	defer func() {
-		_ = c.Close()
-	}()
-
-	req := &runpb.ListWorkerPoolsRequest{
-		Parent: fmt.Sprintf("projects/%s/locations/%s", project, region),
 	}
 
 	// Fetch worker pools
 	var workerPools []model.WorkerPool
-	it := c.ListWorkerPools(ctx, req)
-	for {
-		resp, err := it.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			if strings.Contains(err.Error(), "Unauthenticated") || strings.Contains(err.Error(), "PermissionDenied") {
-				return nil, fmt.Errorf("authentication failed: %w. Tip: Ensure your 'gcloud auth application-default login' is valid and has permissions", err)
-			}
-			return nil, err
-		}
-
+	for _, resp := range pbWorkerPools {
 		workerPools = append(workerPools, mapWorkerPool(resp, project, region))
 	}
 
@@ -92,24 +64,8 @@ func mapWorkerPool(resp *runpb.WorkerPool, project, region string) model.WorkerP
 
 // UpdateScaling updates the scaling settings for a worker pool.
 func UpdateScaling(ctx context.Context, project, region, workerPoolName string, instanceCount int32) (*model.WorkerPool, error) {
-	creds, err := google.FindDefaultCredentials(ctx, run.DefaultAuthScopes()...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find default credentials: %w", err)
-	}
-
-	c, err := run.NewWorkerPoolsClient(ctx, option.WithCredentials(creds))
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		_ = c.Close()
-	}()
-
-	// Get the worker pool
 	fullPoolName := fmt.Sprintf("projects/%s/locations/%s/workerPools/%s", project, region, workerPoolName)
-	workerPool, err := c.GetWorkerPool(ctx, &runpb.GetWorkerPoolRequest{
-		Name: fullPoolName,
-	})
+	workerPool, err := apiClient.GetWorkerPool(ctx, fullPoolName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get worker pool: %w", err)
 	}
@@ -129,16 +85,9 @@ func UpdateScaling(ctx context.Context, project, region, workerPoolName string, 
 	// Keep Etag for concurrency control
 
 	// Update
-	op, err := c.UpdateWorkerPool(ctx, &runpb.UpdateWorkerPoolRequest{
-		WorkerPool: workerPool,
-	})
+	resp, err := apiClient.UpdateWorkerPool(ctx, workerPool)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update worker pool: %w", err)
-	}
-
-	resp, err := op.Wait(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to wait for worker pool update: %w", err)
 	}
 
 	wp := mapWorkerPool(resp, project, region)
@@ -169,3 +118,4 @@ func listAllRegions(project string) ([]model.WorkerPool, error) {
 	wg.Wait()
 	return workerPools, nil
 }
+
