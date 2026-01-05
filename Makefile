@@ -8,17 +8,17 @@ lint: ## Lint code
 	golangci-lint run
 
 test: ## Test packages
-	go test -count=1 -cover -coverprofile=coverage.out -v ./...
+	go test -count=1 -cover -coverprofile=coverage.txt -v ./...
 
 coverage: ## Test coverage with default output
-	go tool cover -func=coverage.out
+	go tool cover -func=coverage.txt
 
 coverage-html: ## Test coverage with html output
 	go tool cover -html=coverage.html
 
 clean: ## Clean project
 	rm -Rf ./bin
-	rm -Rf coverage.out
+	rm -Rf coverage.txt
 
 build: clean ## Build local binary
 	mkdir -p ./bin
