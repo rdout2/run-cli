@@ -14,13 +14,34 @@ const (
 	MODAL_PAGE_SHORTCUT = tcell.KeyCtrlP
 )
 
+var (
+	CachedProjects []model.Project
+)
+
+// PreLoad fetches the projects and caches them.
+func PreLoad() error {
+	var err error
+	CachedProjects, err = api_project.List()
+	return err
+}
+
 // ProjectModal returns a centered modal primitive with search and list
 func ProjectModal(app *tview.Application, onSelect func(project model.Project), closeModal func()) tview.Primitive {
 	// --- Data ---
-	projects, err := api_project.List()
-	if err != nil {
-		projects = []model.Project{}
+	var projects []model.Project
+	var err error
+
+	if len(CachedProjects) > 0 {
+		projects = CachedProjects
+	} else {
+		projects, err = api_project.List()
+		if err != nil {
+			projects = []model.Project{}
+		} else {
+			CachedProjects = projects
+		}
 	}
+
 	var filteredProjects []model.Project
 
 	// --- Components ---

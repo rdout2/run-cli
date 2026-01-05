@@ -2,12 +2,14 @@ package app
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	api_job "github.com/JulienBreux/run-cli/internal/run/api/job"
 	"github.com/JulienBreux/run-cli/internal/run/auth"
 	"github.com/JulienBreux/run-cli/internal/run/config"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
+	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/job"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/project"
 	"github.com/JulienBreux/run-cli/internal/run/ui/app/region"
@@ -34,9 +36,9 @@ var (
 	projectModal tview.Primitive
 	regionModal  tview.Primitive
 
-	footerPages *tview.Pages
+	footerPages   *tview.Pages
 	footerSpinner *spinner.Spinner
-	errorView   *tview.TextView
+	errorView     *tview.TextView
 )
 
 const (
@@ -94,16 +96,42 @@ func initializeApp(cfg *config.Config) {
 		currentInfo.Project = cfg.Project
 	}
 
+	// 2. Pre-load Data (Projects and Services) in parallel
+	var services []model_service.Service
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		_ = project.PreLoad()
+	}()
+
+	go func() {
+		defer wg.Done()
+		if svcs, err := service.Fetch(currentInfo.Project, currentInfo.Region); err == nil {
+			services = svcs
+		}
+	}()
+
+	wg.Wait()
+
 	app.QueueUpdateDraw(func() {
-		// 2. Build the main layout
+		// 3. Build the main layout
 		mainLayout := buildLayout()
 		rootPages.AddPage(LAYOUT_PAGE_ID, mainLayout, true, false)
 
-		// 3. Switch to main layout
+		// 4. Populate Services
+		service.Load(services)
+
+		// 5. Switch to main layout
 		rootPages.SwitchToPage(LAYOUT_PAGE_ID)
 
-		// 4. Trigger initial data load
-		switchTo(service.LIST_PAGE_ID)
+		// 6. Set initial state manually (skip reloading)
+		previousPageID = ""
+		currentPageID = service.LIST_PAGE_ID
+		pages.SwitchToPage(service.LIST_PAGE_ID)
+		service.Shortcuts()
+		hideLoading()
 	})
 }
 
@@ -125,7 +153,7 @@ func buildLayout() *tview.Flex {
 
 	footerSpinner = spinner.New(app)
 	footerPages.AddPage("loading", footerSpinner, true, false)
-	
+
 	footerPages.AddPage("error", errorView, true, false)
 
 	layout := tview.NewFlex().SetDirection(tview.FlexRow).

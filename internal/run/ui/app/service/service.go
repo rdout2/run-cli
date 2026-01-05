@@ -44,6 +44,11 @@ const (
 	SCALE_MODAL_PAGE_ID = "scale"
 )
 
+// Fetch retrieves the list of services from the API.
+func Fetch(projectID, region string) ([]model_service.Service, error) {
+	return api_service.List(projectID, region)
+}
+
 // List returns a list of services.
 func List(app *tview.Application) *table.Table {
 	listTable = table.New(LIST_PAGE_TITLE)
@@ -52,6 +57,12 @@ func List(app *tview.Application) *table.Table {
 	app.SetFocus(listTable.Table)
 
 	return listTable
+}
+
+// Load populates the table with the provided list of services.
+func Load(newServices []model_service.Service) {
+	services = newServices
+	render(services)
 }
 
 func ListReload(app *tview.Application, currentInfo info.Info, onResult func(error)) {
@@ -64,7 +75,7 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 	go func() {
 		// Fetch real data
 		var err error
-		services, err = api_service.List(currentInfo.Project, currentInfo.Region)
+		services, err = Fetch(currentInfo.Project, currentInfo.Region)
 
 		app.QueueUpdateDraw(func() {
 			defer func() {
@@ -80,34 +91,41 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 				return
 			}
 
-			for i, s := range services {
-				row := i + 1 // +1 for header row
-
-				scaling := "n/a"
-				if s.Scaling != nil {
-					switch s.Scaling.ScalingMode {
-					case "AUTOMATIC":
-						scaling = fmt.Sprintf("Auto: min %d", s.Scaling.MinInstances)
-						if s.Scaling.MaxInstances != 0 {
-							scaling += fmt.Sprintf(", max %d", s.Scaling.MaxInstances)
-						}
-					case "MANUAL":
-						scaling = fmt.Sprintf("Manual: %d", s.Scaling.ManualInstanceCount)
-					}
-				}
-
-				listTable.Table.SetCell(row, 0, tview.NewTableCell(s.Name))
-				listTable.Table.SetCell(row, 1, tview.NewTableCell(s.Region))
-				listTable.Table.SetCell(row, 2, tview.NewTableCell(scaling))
-				listTable.Table.SetCell(row, 3, tview.NewTableCell(s.URI))
-				listTable.Table.SetCell(row, 4, tview.NewTableCell(s.LastModifier))
-				listTable.Table.SetCell(row, 5, tview.NewTableCell(humanize.Time(s.UpdateTime)))
-			}
-
-			// Refresh title
-			listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(services)))
+			render(services)
 		})
 	}()
+}
+
+func render(svc []model_service.Service) {
+	listTable.Table.Clear()
+	listTable.SetHeadersWithExpansions(listHeaders, listExpansions)
+
+	for i, s := range svc {
+		row := i + 1 // +1 for header row
+
+		scaling := "n/a"
+		if s.Scaling != nil {
+			switch s.Scaling.ScalingMode {
+			case "AUTOMATIC":
+				scaling = fmt.Sprintf("Auto: min %d", s.Scaling.MinInstances)
+				if s.Scaling.MaxInstances != 0 {
+					scaling += fmt.Sprintf(", max %d", s.Scaling.MaxInstances)
+				}
+			case "MANUAL":
+				scaling = fmt.Sprintf("Manual: %d", s.Scaling.ManualInstanceCount)
+			}
+		}
+
+		listTable.Table.SetCell(row, 0, tview.NewTableCell(s.Name))
+		listTable.Table.SetCell(row, 1, tview.NewTableCell(s.Region))
+		listTable.Table.SetCell(row, 2, tview.NewTableCell(scaling))
+		listTable.Table.SetCell(row, 3, tview.NewTableCell(s.URI))
+		listTable.Table.SetCell(row, 4, tview.NewTableCell(s.LastModifier))
+		listTable.Table.SetCell(row, 5, tview.NewTableCell(humanize.Time(s.UpdateTime)))
+	}
+
+	// Refresh title
+	listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(svc)))
 }
 
 // GetSelectedServiceURL returns the URL of the currently selected service.
