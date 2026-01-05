@@ -1,8 +1,8 @@
 package loader
 
 import (
-	"github.com/JulienBreux/run-cli/internal/run/ui/component/logo"
-	"github.com/JulienBreux/run-cli/internal/run/ui/component/spinner"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/logo"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/spinner"
 	"github.com/rivo/tview"
 )
 

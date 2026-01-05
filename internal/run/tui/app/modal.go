@@ -6,13 +6,13 @@ import (
 	model_project "github.com/JulienBreux/run-cli/internal/run/model/common/project"
 	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
 	model_workerpool "github.com/JulienBreux/run-cli/internal/run/model/workerpool"
-	"github.com/JulienBreux/run-cli/internal/run/ui/app/describe"
-	"github.com/JulienBreux/run-cli/internal/run/ui/app/log"
-	"github.com/JulienBreux/run-cli/internal/run/ui/app/project"
-	"github.com/JulienBreux/run-cli/internal/run/ui/app/region"
-	service_scale "github.com/JulienBreux/run-cli/internal/run/ui/app/service/scale"
-	workerpool_scale "github.com/JulienBreux/run-cli/internal/run/ui/app/workerpool/scale"
-	"github.com/JulienBreux/run-cli/internal/run/ui/component/header"
+	"github.com/JulienBreux/run-cli/internal/run/tui/app/describe"
+	"github.com/JulienBreux/run-cli/internal/run/tui/app/log"
+	"github.com/JulienBreux/run-cli/internal/run/tui/app/project"
+	"github.com/JulienBreux/run-cli/internal/run/tui/app/region"
+	service_scale "github.com/JulienBreux/run-cli/internal/run/tui/app/service/scale"
+	workerpool_scale "github.com/JulienBreux/run-cli/internal/run/tui/app/workerpool/scale"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
 )
 
 func openProjectModal() {

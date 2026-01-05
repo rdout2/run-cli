@@ -8,7 +8,7 @@ import (
 
 	api_service "github.com/JulienBreux/run-cli/internal/run/api/service"
 	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
-	"github.com/JulienBreux/run-cli/internal/run/ui/component/spinner"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/spinner"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )

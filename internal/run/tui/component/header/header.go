@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
-	"github.com/JulienBreux/run-cli/internal/run/ui/component/logo"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/logo"
 	"github.com/JulienBreux/run-cli/pkg/version"
 	"github.com/rivo/tview"
 )

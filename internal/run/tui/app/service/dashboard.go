@@ -8,8 +8,8 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
 	model_revision "github.com/JulienBreux/run-cli/internal/run/model/service/revision"
-	"github.com/JulienBreux/run-cli/internal/run/ui/component/header"
-	"github.com/JulienBreux/run-cli/internal/run/ui/component/table"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/table"
 	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -295,16 +295,16 @@ func updateRevisionDetail(row int) {
 		}
 		fmt.Fprintf(&sb, "[lightcyan]%s[white]\n", name)
 		fmt.Fprintf(&sb, "  [lightcyan]Image:[white] %s\n", c.Image)
-		
+
 		if len(c.Ports) > 0 {
 			fmt.Fprintf(&sb, "  [lightcyan]Port:[white] %d\n", c.Ports[0].ContainerPort)
 		}
-		
+
 		if c.Resources != nil && len(c.Resources.Limits) > 0 {
 			mem := c.Resources.Limits["memory"]
 			cpu := c.Resources.Limits["cpu"]
 			gpu := c.Resources.Limits["nvidia.com/gpu"]
-			
+
 			resStr := fmt.Sprintf("%s Memory, %s CPU", mem, cpu)
 			if gpu != "" {
 				gpuStr := gpu + " GPU"

@@ -5,7 +5,7 @@ import (
 
 	"github.com/JulienBreux/run-cli/internal/run/command/version"
 	"github.com/JulienBreux/run-cli/internal/run/config"
-	"github.com/JulienBreux/run-cli/internal/run/ui/app"
+	"github.com/JulienBreux/run-cli/internal/run/tui/app"
 	"github.com/spf13/cobra"
 )
 

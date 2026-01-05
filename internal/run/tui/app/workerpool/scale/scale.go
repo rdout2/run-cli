@@ -8,7 +8,7 @@ import (
 
 	api_workerpool "github.com/JulienBreux/run-cli/internal/run/api/workerpool"
 	model_workerpool "github.com/JulienBreux/run-cli/internal/run/model/workerpool"
-	"github.com/JulienBreux/run-cli/internal/run/ui/component/spinner"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/spinner"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
