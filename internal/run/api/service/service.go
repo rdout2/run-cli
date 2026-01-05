@@ -164,7 +164,7 @@ func List(project, region string) ([]model.Service, error) {
 }
 
 // UpdateScaling updates the scaling settings for a service.
-func UpdateScaling(ctx context.Context, project, region, serviceName string, min, max, manual int) (*model.Service, error) {
+func UpdateScaling(ctx context.Context, project, region, serviceName string, min, max, manual int32) (*model.Service, error) {
 	creds, err := google.FindDefaultCredentials(ctx, run.DefaultAuthScopes()...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find default credentials: %w", err)
@@ -197,12 +197,12 @@ func UpdateScaling(ctx context.Context, project, region, serviceName string, min
 		service.Scaling.MinInstanceCount = 0
 		service.Scaling.MaxInstanceCount = 0
 
-		manualInstanceCount := int32(manual)
+		manualInstanceCount := manual
 		service.Scaling.ManualInstanceCount = &manualInstanceCount
 	} else {
 		service.Scaling.ScalingMode = runpb.ServiceScaling_AUTOMATIC
-		service.Scaling.MinInstanceCount = int32(min)
-		service.Scaling.MaxInstanceCount = int32(max)
+		service.Scaling.MinInstanceCount = min
+		service.Scaling.MaxInstanceCount = max
 		service.Scaling.ManualInstanceCount = nil
 	}
 

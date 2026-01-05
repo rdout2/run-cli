@@ -86,7 +86,7 @@ func List(project, region string) ([]model.WorkerPool, error) {
 }
 
 // UpdateScaling updates the scaling settings for a worker pool.
-func UpdateScaling(ctx context.Context, project, region, workerPoolName string, instanceCount int) (*model.WorkerPool, error) {
+func UpdateScaling(ctx context.Context, project, region, workerPoolName string, instanceCount int32) (*model.WorkerPool, error) {
 	creds, err := google.FindDefaultCredentials(ctx, run.DefaultAuthScopes()...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find default credentials: %w", err)
@@ -113,8 +113,7 @@ func UpdateScaling(ctx context.Context, project, region, workerPoolName string, 
 	if workerPool.Scaling == nil {
 		workerPool.Scaling = &runpb.WorkerPoolScaling{}
 	}
-	manualCount := int32(instanceCount)
-	workerPool.Scaling.ManualInstanceCount = &manualCount
+	workerPool.Scaling.ManualInstanceCount = &instanceCount
 
 	// Clean up output-only fields
 	workerPool.Uid = ""
@@ -149,7 +148,6 @@ func UpdateScaling(ctx context.Context, project, region, workerPoolName string, 
 	return &model.WorkerPool{
 		DisplayName:  name,
 		Name:         resp.Name,
-		State:        "...", // resp.State.String(),
 		UpdateTime:   resp.UpdateTime.AsTime(),
 		LastModifier: resp.LastModifier,
 		Region:       region,

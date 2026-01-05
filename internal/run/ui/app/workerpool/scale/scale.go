@@ -64,8 +64,7 @@ func Modal(app *tview.Application, workerPool *model_workerpool.WorkerPool, page
 	// Add buttons
 	form.AddButton("Save", func() {
 		// Get values from fields
-		countStr := instanceCountField.GetText()
-		count, err := strconv.Atoi(countStr)
+		count, err := strconv.ParseInt(instanceCountField.GetText(), 10, 32)
 		if err != nil || count < 0 {
 			statusSpinner.SetText("[red]Invalid instance count")
 			return
@@ -79,7 +78,7 @@ func Modal(app *tview.Application, workerPool *model_workerpool.WorkerPool, page
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 			defer cancel()
 
-			_, err := api_workerpool.UpdateScaling(ctx, workerPool.Project, workerPool.Region, workerPool.DisplayName, count)
+			_, err := api_workerpool.UpdateScaling(ctx, workerPool.Project, workerPool.Region, workerPool.DisplayName, int32(count))
 			app.QueueUpdateDraw(func() {
 				if err != nil {
 					statusSpinner.Stop(fmt.Sprintf("[red]Error: %v", err))

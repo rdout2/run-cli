@@ -122,25 +122,25 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 	form.AddButton("Save", func() {
 		// Get values from fields
 		var err error
-		var min, max, manual int
+		var min, max, manual int64
 		_, mode := modeDropdown.GetCurrentOption()
 
 		if mode == "Manual" {
-			manual, err = strconv.Atoi(manualInstancesField.GetText())
+			manual, err = strconv.ParseInt(manualInstancesField.GetText(), 10, 32)
 			if err != nil {
 				statusSpinner.SetText("[red]Invalid manual instance count")
 				return
 			}
 			min, max = 0, 0
 		} else { // Automatic
-			min, err = strconv.Atoi(minInstancesField.GetText())
+			min, err = strconv.ParseInt(minInstancesField.GetText(), 10, 32)
 			if err != nil {
 				statusSpinner.SetText("[red]Invalid min instance count")
 				return
 			}
 
 			if maxInstancesField.GetText() != "" {
-				max, err = strconv.Atoi(maxInstancesField.GetText())
+				max, err = strconv.ParseInt(maxInstancesField.GetText(), 10, 32)
 				if err != nil {
 					statusSpinner.SetText("[red]Invalid max instance count")
 					return
@@ -164,7 +164,7 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 			defer cancel()
 
-			_, err := api_service.UpdateScaling(ctx, service.Project, service.Region, service.Name, min, max, manual)
+			_, err := api_service.UpdateScaling(ctx, service.Project, service.Region, service.Name, int32(min), int32(max), int32(manual))
 			app.QueueUpdateDraw(func() {
 				if err != nil {
 					statusSpinner.Stop(fmt.Sprintf("[red]Error: %v", err))
