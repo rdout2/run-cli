@@ -57,35 +57,39 @@ func List(project, region string) ([]model.Job, error) {
 			return nil, err
 		}
 
-		// Map LatestCreatedExecution
-		var latestExecution *model.ExecutionReference
-		if resp.LatestCreatedExecution != nil {
-			latestExecution = &model.ExecutionReference{
-				Name:       resp.LatestCreatedExecution.Name,
-				CreateTime: resp.LatestCreatedExecution.CreateTime.AsTime(),
-			}
-		}
-
-		// Map TerminalCondition
-		var terminalCondition *condition.Condition
-		if resp.TerminalCondition != nil {
-			terminalCondition = &condition.Condition{
-				State:              resp.TerminalCondition.State.String(),
-				Message:            resp.TerminalCondition.Message,
-				LastTransitionTime: resp.TerminalCondition.LastTransitionTime.AsTime(),
-			}
-		}
-
-		jobs = append(jobs, model.Job{
-			Name:                   resp.Name,
-			LatestCreatedExecution: latestExecution,
-			TerminalCondition:      terminalCondition,
-			Creator:                resp.Creator,
-			Region:                 region, // Assuming single region listing for now
-		})
+		jobs = append(jobs, mapJob(resp, region))
 	}
 
 	return jobs, nil
+}
+
+func mapJob(resp *runpb.Job, region string) model.Job {
+	// Map LatestCreatedExecution
+	var latestExecution *model.ExecutionReference
+	if resp.LatestCreatedExecution != nil {
+		latestExecution = &model.ExecutionReference{
+			Name:       resp.LatestCreatedExecution.Name,
+			CreateTime: resp.LatestCreatedExecution.CreateTime.AsTime(),
+		}
+	}
+
+	// Map TerminalCondition
+	var terminalCondition *condition.Condition
+	if resp.TerminalCondition != nil {
+		terminalCondition = &condition.Condition{
+			State:              resp.TerminalCondition.State.String(),
+			Message:            resp.TerminalCondition.Message,
+			LastTransitionTime: resp.TerminalCondition.LastTransitionTime.AsTime(),
+		}
+	}
+
+	return model.Job{
+		Name:                   resp.Name,
+		LatestCreatedExecution: latestExecution,
+		TerminalCondition:      terminalCondition,
+		Creator:                resp.Creator,
+		Region:                 region,
+	}
 }
 
 func listAllRegions(project string) ([]model.Job, error) {

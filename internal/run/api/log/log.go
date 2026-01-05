@@ -93,7 +93,11 @@ func StreamLogs(ctx context.Context, projectID, filter string, logChan chan<- st
 }
 
 func sendEntry(ch chan<- string, entry *logging.Entry) {
+	ch <- formatEntry(entry)
+}
+
+func formatEntry(entry *logging.Entry) string {
 	payload := fmt.Sprintf("%v", entry.Payload)
 	ts := entry.Timestamp.Format("15:04:05")
-	ch <- fmt.Sprintf("[%s] %s", ts, payload)
+	return fmt.Sprintf("[%s] %s", ts, payload)
 }

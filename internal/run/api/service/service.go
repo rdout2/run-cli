@@ -61,106 +61,110 @@ func List(project, region string) ([]model.Service, error) {
 			return nil, err
 		}
 
-		// Determine Service Name (Last part of resource name)
-		nameParts := strings.Split(resp.Name, "/")
-		name := nameParts[len(nameParts)-1]
-
-		// Determine Last Modifier
-		lastModifier := resp.LastModifier
-		if lastModifier == "" {
-			lastModifier = resp.Creator
-		}
-
-		var trafficStatuses []*model_traffic.TrafficTargetStatus
-		for _, ts := range resp.TrafficStatuses {
-			revName := ts.Revision
-			if strings.Contains(revName, "/") {
-				parts := strings.Split(revName, "/")
-				revName = parts[len(parts)-1]
-			}
-			trafficStatuses = append(trafficStatuses, &model_traffic.TrafficTargetStatus{
-				Type:     ts.Type.String(),
-				Revision: revName,
-				Percent:  ts.Percent,
-				Tag:      ts.Tag,
-				URI:      ts.Uri,
-			})
-		}
-
-		s := model_scaling.Scaling{
-			ScalingMode: "AUTOMATIC",
-		}
-		if resp.Scaling != nil {
-			switch resp.Scaling.ScalingMode {
-			case runpb.ServiceScaling_AUTOMATIC:
-				s.ScalingMode = "AUTOMATIC"
-				s.MinInstances = resp.Scaling.MinInstanceCount
-			case runpb.ServiceScaling_MANUAL:
-				s.ScalingMode = "MANUAL"
-				if resp.Scaling.ManualInstanceCount != nil {
-					s.ManualInstanceCount = *resp.Scaling.ManualInstanceCount
-				}
-			}
-			s.MinInstances = resp.Scaling.MinInstanceCount
-			s.MaxInstances = resp.Scaling.MaxInstanceCount
-		}
-
-		latestReadyRevision := resp.LatestReadyRevision
-		if strings.Contains(latestReadyRevision, "/") {
-			parts := strings.Split(latestReadyRevision, "/")
-			latestReadyRevision = parts[len(parts)-1]
-		}
-
-		latestCreatedRevision := resp.LatestCreatedRevision
-		if strings.Contains(latestCreatedRevision, "/") {
-			parts := strings.Split(latestCreatedRevision, "/")
-			latestCreatedRevision = parts[len(parts)-1]
-		}
-
-		n := model_networking.Networking{
-			Ingress:            resp.Ingress.String(),
-			DefaultUriDisabled: resp.DefaultUriDisabled,
-			IapEnabled:         resp.IapEnabled,
-		}
-		if resp.Template != nil && resp.Template.VpcAccess != nil {
-			n.VpcAccess = &model_networking.VpcAccess{
-				Connector: resp.Template.VpcAccess.Connector,
-				Egress:    resp.Template.VpcAccess.Egress.String(),
-			}
-		}
-
-		sec := model_security.Security{
-			InvokerIAMDisabled: resp.InvokerIamDisabled,
-		}
-		if resp.BinaryAuthorization != nil {
-			sec.BinaryAuthorization = resp.BinaryAuthorization.GetPolicy()
-			if resp.BinaryAuthorization.GetUseDefault() {
-				sec.BinaryAuthorization = "default"
-			}
-			sec.BreakglassJustification = resp.BinaryAuthorization.BreakglassJustification
-		}
-		if resp.Template != nil {
-			sec.ServiceAccount = resp.Template.ServiceAccount
-			sec.EncryptionKey = resp.Template.EncryptionKey
-		}
-
-		services = append(services, model.Service{
-			Name:                  name,
-			URI:                   resp.Uri,
-			LastModifier:          lastModifier,
-			UpdateTime:            resp.UpdateTime.AsTime(),
-			Region:                region,
-			Scaling:               &s,
-			Project:               project,
-			TrafficStatuses:       trafficStatuses,
-			LatestReadyRevision:   latestReadyRevision,
-			LatestCreatedRevision: latestCreatedRevision,
-			Networking:            &n,
-			Security:              &sec,
-		})
+		services = append(services, mapService(resp, project, region))
 	}
 
 	return services, nil
+}
+
+func mapService(resp *runpb.Service, project, region string) model.Service {
+	// Determine Service Name (Last part of resource name)
+	nameParts := strings.Split(resp.Name, "/")
+	name := nameParts[len(nameParts)-1]
+
+	// Determine Last Modifier
+	lastModifier := resp.LastModifier
+	if lastModifier == "" {
+		lastModifier = resp.Creator
+	}
+
+	var trafficStatuses []*model_traffic.TrafficTargetStatus
+	for _, ts := range resp.TrafficStatuses {
+		revName := ts.Revision
+		if strings.Contains(revName, "/") {
+			parts := strings.Split(revName, "/")
+			revName = parts[len(parts)-1]
+		}
+		trafficStatuses = append(trafficStatuses, &model_traffic.TrafficTargetStatus{
+			Type:     ts.Type.String(),
+			Revision: revName,
+			Percent:  ts.Percent,
+			Tag:      ts.Tag,
+			URI:      ts.Uri,
+		})
+	}
+
+	s := model_scaling.Scaling{
+		ScalingMode: "AUTOMATIC",
+	}
+	if resp.Scaling != nil {
+		switch resp.Scaling.ScalingMode {
+		case runpb.ServiceScaling_AUTOMATIC:
+			s.ScalingMode = "AUTOMATIC"
+			s.MinInstances = resp.Scaling.MinInstanceCount
+		case runpb.ServiceScaling_MANUAL:
+			s.ScalingMode = "MANUAL"
+			if resp.Scaling.ManualInstanceCount != nil {
+				s.ManualInstanceCount = *resp.Scaling.ManualInstanceCount
+			}
+		}
+		s.MinInstances = resp.Scaling.MinInstanceCount
+		s.MaxInstances = resp.Scaling.MaxInstanceCount
+	}
+
+	latestReadyRevision := resp.LatestReadyRevision
+	if strings.Contains(latestReadyRevision, "/") {
+		parts := strings.Split(latestReadyRevision, "/")
+		latestReadyRevision = parts[len(parts)-1]
+	}
+
+	latestCreatedRevision := resp.LatestCreatedRevision
+	if strings.Contains(latestCreatedRevision, "/") {
+		parts := strings.Split(latestCreatedRevision, "/")
+		latestCreatedRevision = parts[len(parts)-1]
+	}
+
+	n := model_networking.Networking{
+		Ingress:            resp.Ingress.String(),
+		DefaultUriDisabled: resp.DefaultUriDisabled,
+		IapEnabled:         resp.IapEnabled,
+	}
+	if resp.Template != nil && resp.Template.VpcAccess != nil {
+		n.VpcAccess = &model_networking.VpcAccess{
+			Connector: resp.Template.VpcAccess.Connector,
+			Egress:    resp.Template.VpcAccess.Egress.String(),
+		}
+	}
+
+	sec := model_security.Security{
+		InvokerIAMDisabled: resp.InvokerIamDisabled,
+	}
+	if resp.BinaryAuthorization != nil {
+		sec.BinaryAuthorization = resp.BinaryAuthorization.GetPolicy()
+		if resp.BinaryAuthorization.GetUseDefault() {
+			sec.BinaryAuthorization = "default"
+		}
+		sec.BreakglassJustification = resp.BinaryAuthorization.BreakglassJustification
+	}
+	if resp.Template != nil {
+		sec.ServiceAccount = resp.Template.ServiceAccount
+		sec.EncryptionKey = resp.Template.EncryptionKey
+	}
+
+	return model.Service{
+		Name:                  name,
+		URI:                   resp.Uri,
+		LastModifier:          lastModifier,
+		UpdateTime:            resp.UpdateTime.AsTime(),
+		Region:                region,
+		Scaling:               &s,
+		Project:               project,
+		TrafficStatuses:       trafficStatuses,
+		LatestReadyRevision:   latestReadyRevision,
+		LatestCreatedRevision: latestCreatedRevision,
+		Networking:            &n,
+		Security:              &sec,
+	}
 }
 
 // UpdateScaling updates the scaling settings for a service.
@@ -234,33 +238,8 @@ func UpdateScaling(ctx context.Context, project, region, serviceName string, min
 		return nil, fmt.Errorf("failed to wait for service update: %w", err)
 	}
 
-	nameParts := strings.Split(resp.Name, "/")
-	name := nameParts[len(nameParts)-1]
-
-	s := model_scaling.Scaling{}
-	if resp.Scaling != nil {
-		switch resp.Scaling.ScalingMode {
-		case runpb.ServiceScaling_AUTOMATIC:
-			s.ScalingMode = "AUTOMATIC"
-			s.MinInstances = resp.Scaling.MinInstanceCount
-			s.MaxInstances = resp.Scaling.MaxInstanceCount
-		case runpb.ServiceScaling_MANUAL:
-			s.ScalingMode = "MANUAL"
-			if resp.Scaling.ManualInstanceCount != nil {
-				s.ManualInstanceCount = *resp.Scaling.ManualInstanceCount
-			}
-		}
-	}
-
-	return &model.Service{
-		Name:         name,
-		URI:          resp.Uri,
-		LastModifier: resp.LastModifier,
-		UpdateTime:   resp.UpdateTime.AsTime(),
-		Region:       region,
-		Scaling:      &s,
-		Project:      project,
-	}, nil
+	s := mapService(resp, project, region)
+	return &s, nil
 }
 
 func listAllRegions(project string) ([]model.Service, error) {

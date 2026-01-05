@@ -58,31 +58,36 @@ func List(project, region string) ([]model.WorkerPool, error) {
 			return nil, err
 		}
 
-		// Determine Service Name (Last part of resource name)
-		nameParts := strings.Split(resp.Name, "/")
-		name := nameParts[len(nameParts)-1]
-
-		s := model_scaling.Scaling{}
-		if resp.Scaling != nil {
-			s.ManualInstanceCount = *resp.Scaling.ManualInstanceCount
-
-		}
-
-		// Map fields
-		workerPools = append(workerPools, model.WorkerPool{
-			DisplayName:  name,
-			Name:         resp.Name,
-			State:        "...", ///resp.State.String(),
-			UpdateTime:   resp.UpdateTime.AsTime(),
-			LastModifier: resp.LastModifier,
-			Region:       region,
-			Project:      project,
-			Scaling:      &s,
-			Labels:       resp.Labels,
-		})
+		workerPools = append(workerPools, mapWorkerPool(resp, project, region))
 	}
 
 	return workerPools, nil
+}
+
+func mapWorkerPool(resp *runpb.WorkerPool, project, region string) model.WorkerPool {
+	// Determine Service Name (Last part of resource name)
+	nameParts := strings.Split(resp.Name, "/")
+	name := nameParts[len(nameParts)-1]
+
+	s := model_scaling.Scaling{}
+	if resp.Scaling != nil {
+		if resp.Scaling.ManualInstanceCount != nil {
+			s.ManualInstanceCount = *resp.Scaling.ManualInstanceCount
+		}
+	}
+
+	// Map fields
+	return model.WorkerPool{
+		DisplayName:  name,
+		Name:         resp.Name,
+		State:        "...", ///resp.State.String(),
+		UpdateTime:   resp.UpdateTime.AsTime(),
+		LastModifier: resp.LastModifier,
+		Region:       region,
+		Project:      project,
+		Scaling:      &s,
+		Labels:       resp.Labels,
+	}
 }
 
 // UpdateScaling updates the scaling settings for a worker pool.
@@ -136,24 +141,8 @@ func UpdateScaling(ctx context.Context, project, region, workerPoolName string, 
 		return nil, fmt.Errorf("failed to wait for worker pool update: %w", err)
 	}
 
-	// Map response to model
-	nameParts := strings.Split(resp.Name, "/")
-	name := nameParts[len(nameParts)-1]
-
-	s := model_scaling.Scaling{}
-	if resp.Scaling != nil && resp.Scaling.ManualInstanceCount != nil {
-		s.ManualInstanceCount = *resp.Scaling.ManualInstanceCount
-	}
-
-	return &model.WorkerPool{
-		DisplayName:  name,
-		Name:         resp.Name,
-		UpdateTime:   resp.UpdateTime.AsTime(),
-		LastModifier: resp.LastModifier,
-		Region:       region,
-		Scaling:      &s,
-		Labels:       resp.Labels,
-	}, nil
+	wp := mapWorkerPool(resp, project, region)
+	return &wp, nil
 }
 
 func listAllRegions(project string) ([]model.WorkerPool, error) {
