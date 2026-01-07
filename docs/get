@@ -1,0 +1,110 @@
+#!/bin/sh
+set -e
+
+# --- Configuration ---
+GITHUB_REPO="JulienBreux/run-cli"
+BINARY_NAME="run"           # Name of the binary inside the archive
+INSTALLED_NAME="run-cli"    # Name of the binary to install on the system
+INSTALL_DIR="/usr/local/bin"
+
+# --- Detect OS & Architecture ---
+OS=$(uname -s)
+ARCH=$(uname -m)
+
+# 1. Detect OS and set extension (Linux or Darwin)
+case "$OS" in
+    Linux)
+        OS="Linux"
+        EXT="tar.gz"
+        ;;
+    Darwin)
+        OS="Darwin"
+        EXT="tar.gz"
+        ;;
+    *)
+        echo "Error: Unsupported operating system: $OS"
+        exit 1
+        ;;
+esac
+
+# 2. Detect Architecture and map to release naming convention
+case "$ARCH" in
+    x86_64|amd64)
+        ARCH="x86_64"
+        ;;
+    arm64|aarch64)
+        ARCH="arm64"
+        ;;
+    i386|i686)
+        ARCH="i386"
+        ;;
+    *)
+        echo "Error: Unsupported architecture: $ARCH"
+        exit 1
+        ;;
+esac
+
+# --- Construct Download URL ---
+# Pattern: run_Linux_arm64.tar.gz
+ASSET_NAME="${BINARY_NAME}_${OS}_${ARCH}.${EXT}"
+DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/${ASSET_NAME}"
+
+# --- Setup Temporary Directory ---
+TMP_DIR=$(mktemp -d)
+cleanup() {
+    rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+echo "Downloading $INSTALLED_NAME ($ASSET_NAME)..."
+
+# --- Download & Extract ---
+cd "$TMP_DIR"
+
+if command -v curl >/dev/null 2>&1; then
+    curl -sL "$DOWNLOAD_URL" | tar -xz
+elif command -v wget >/dev/null 2>&1; then
+    wget -qO- "$DOWNLOAD_URL" | tar -xz
+else
+    echo "Error: Neither curl nor wget were found."
+    exit 1
+fi
+
+# --- Install Binary ---
+if [ -f "$BINARY_NAME" ]; then
+    echo "Installing to $INSTALL_DIR..."
+
+    # Move binary and set permissions (with sudo if needed)
+    if [ -w "$INSTALL_DIR" ]; then
+        mv "$BINARY_NAME" "$INSTALL_DIR/$INSTALLED_NAME"
+        chmod +x "$INSTALL_DIR/$INSTALLED_NAME"
+    else
+        echo "Sudo permissions required to install to $INSTALL_DIR"
+        sudo mv "$BINARY_NAME" "$INSTALL_DIR/$INSTALLED_NAME"
+        sudo chmod +x "$INSTALL_DIR/$INSTALLED_NAME"
+    fi
+
+    echo "Success! $INSTALLED_NAME is installed."
+else
+    echo "Error: Binary '$BINARY_NAME' not found in the downloaded archive."
+    exit 1
+fi
+
+# --- Symlink Creation (Alias 'run') ---
+# Check if a 'run' command already exists in the PATH
+if ! command -v run >/dev/null 2>&1; then
+    echo "The command 'run' is not taken. Creating a symbolic link..."
+    LINK_PATH="$INSTALL_DIR/run"
+
+    # Create symlink: run -> run-cli
+    if [ -w "$INSTALL_DIR" ]; then
+        ln -s "$INSTALL_DIR/$INSTALLED_NAME" "$LINK_PATH"
+    else
+        sudo ln -s "$INSTALL_DIR/$INSTALLED_NAME" "$LINK_PATH"
+    fi
+
+    echo "Symbolic link created! You can now use 'run' or 'run-cli'."
+else
+    echo "Notice: A command named 'run' already exists. Skipping alias creation."
+    echo "You can use '$INSTALLED_NAME' to invoke the tool."
+fi

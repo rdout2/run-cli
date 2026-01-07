@@ -49,6 +49,14 @@ Run CLI is available on Linux, OSX and Windows platforms.
     go install github.com/JulienBreux/run-cli/cmd/run@latest
     ```
 
+* Via CURL
+
+    You can install **Run CLI** using CURL and the shell script:
+
+    ```shell
+    curl -sL https://JulienBreux.github.io/run-cli/get | sh
+    ```
+
 ## ▶️ Usage
 
 Simply run the command:
