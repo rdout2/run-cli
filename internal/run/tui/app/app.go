@@ -18,8 +18,8 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/loader"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/spinner"
-	"github.com/JulienBreux/run-cli/internal/run/url"
 	"github.com/gdamore/tcell/v2"
+	"github.com/pkg/browser"
 	"github.com/rivo/tview"
 )
 
@@ -175,7 +175,7 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 	// Navigation.
 	if event.Key() == tcell.KeyCtrlZ {
 		u := fmt.Sprintf(CONSOLE_URL, currentInfo.Project)
-		_ = url.OpenInBrowser(u)
+		_ = browser.OpenURL(u)
 		return nil
 	}
 	if event.Key() == service.LIST_PAGE_SHORTCUT {

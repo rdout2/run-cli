@@ -9,9 +9,9 @@ import (
 	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/table"
-	"github.com/JulienBreux/run-cli/internal/run/url"
 	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell/v2"
+	"github.com/pkg/browser"
 	"github.com/rivo/tview"
 )
 
@@ -166,7 +166,7 @@ func HandleShortcuts(event *tcell.EventKey) *tcell.EventKey {
 	if event.Rune() == 'o' {
 		u := GetSelectedServiceURL()
 		if u != "" {
-			_ = url.OpenInBrowser(u)
+			_ = browser.OpenURL(u)
 			return event
 		}
 		return nil // Consume the event
