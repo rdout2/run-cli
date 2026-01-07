@@ -42,6 +42,7 @@ func TestLoadSave(t *testing.T) {
 
 	// 2. Test saving a config
 	cfg.Region = "us-central1"
+	cfg.Project = "my-project"
 	if err := cfg.Save(); err != nil {
 		t.Fatalf("failed to save config: %v", err)
 	}
@@ -54,9 +55,13 @@ func TestLoadSave(t *testing.T) {
 	if loadedCfg.Region != "us-central1" {
 		t.Errorf("expected region 'us-central1', but got: %s", loadedCfg.Region)
 	}
+	if loadedCfg.Project != "my-project" {
+		t.Errorf("expected project 'my-project', but got: %s", loadedCfg.Project)
+	}
 
 	// 4. Test saving an updated config
 	loadedCfg.Region = "europe-west1"
+	loadedCfg.Project = "other-project"
 	if err := loadedCfg.Save(); err != nil {
 		t.Fatalf("failed to save updated config: %v", err)
 	}
@@ -68,6 +73,9 @@ func TestLoadSave(t *testing.T) {
 	}
 	if updatedCfg.Region != "europe-west1" {
 		t.Errorf("expected region 'europe-west1', but got: %s", updatedCfg.Region)
+	}
+	if updatedCfg.Project != "other-project" {
+		t.Errorf("expected project 'other-project', but got: %s", updatedCfg.Project)
 	}
 }
 
