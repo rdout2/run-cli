@@ -65,6 +65,20 @@ func TestMapJob(t *testing.T) {
 	assert.Equal(t, "All good", result.TerminalCondition.Message)
 }
 
+func TestMapJob_NilFields(t *testing.T) {
+	resp := &runpb.Job{
+		Name:    "projects/my-project/locations/us-central1/jobs/my-job",
+		Creator: "user@example.com",
+	}
+
+	result := mapJob(resp, "us-central1")
+
+	assert.Equal(t, resp.Name, result.Name)
+	assert.Equal(t, "user@example.com", result.Creator)
+	assert.Nil(t, result.LatestCreatedExecution)
+	assert.Nil(t, result.TerminalCondition)
+}
+
 func TestList(t *testing.T) {
 	originalClient := apiClient
 	defer func() { apiClient = originalClient }()
@@ -117,6 +131,22 @@ func TestExecute(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, exec)
 	assert.Equal(t, "exec1", exec.Name)
+}
+
+func TestExecute_Error(t *testing.T) {
+	originalClient := apiClient
+	defer func() { apiClient = originalClient }()
+
+	mock := &MockClient{}
+	apiClient = mock
+
+	mock.RunJobFunc = func(ctx context.Context, name string) (*runpb.Execution, error) {
+		return nil, assert.AnError
+	}
+
+	exec, err := Execute("p", "r", "myjob")
+	assert.Error(t, err)
+	assert.Nil(t, exec)
 }
 
 func TestList_AllRegions(t *testing.T) {

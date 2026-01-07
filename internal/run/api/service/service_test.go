@@ -63,6 +63,48 @@ func TestMapService(t *testing.T) {
 	assert.Equal(t, "INGRESS_TRAFFIC_ALL", result.Networking.Ingress)
 }
 
+func TestMapService_Complex(t *testing.T) {
+	instanceCount := int32(3)
+	resp := &runpb.Service{
+		Name: "projects/p/locations/r/services/s-complex",
+		Scaling: &runpb.ServiceScaling{
+			ScalingMode:         runpb.ServiceScaling_MANUAL,
+			ManualInstanceCount: &instanceCount,
+		},
+		Template: &runpb.RevisionTemplate{
+			VpcAccess: &runpb.VpcAccess{
+				Connector: "connector1",
+				Egress:    runpb.VpcAccess_ALL_TRAFFIC,
+			},
+			ServiceAccount: "sa@example.com",
+			EncryptionKey:  "key1",
+		},
+		BinaryAuthorization: &runpb.BinaryAuthorization{
+			BinauthzMethod: &runpb.BinaryAuthorization_UseDefault{
+				UseDefault: true,
+			},
+			BreakglassJustification: "emergency",
+		},
+	}
+
+	result := mapService(resp, "p", "r")
+
+	// Scaling
+	assert.Equal(t, "MANUAL", result.Scaling.ScalingMode)
+	assert.Equal(t, int32(3), result.Scaling.ManualInstanceCount)
+
+	// Networking / VPC
+	assert.NotNil(t, result.Networking.VpcAccess)
+	assert.Equal(t, "connector1", result.Networking.VpcAccess.Connector)
+	assert.Equal(t, "ALL_TRAFFIC", result.Networking.VpcAccess.Egress)
+
+	// Security
+	assert.Equal(t, "sa@example.com", result.Security.ServiceAccount)
+	assert.Equal(t, "key1", result.Security.EncryptionKey)
+	assert.Equal(t, "default", result.Security.BinaryAuthorization)
+	assert.Equal(t, "emergency", result.Security.BreakglassJustification)
+}
+
 // MockClient is a mock implementation of the Client interface.
 type MockClient struct {
 	ListServicesFunc  func(ctx context.Context, project, region string) ([]*runpb.Service, error)

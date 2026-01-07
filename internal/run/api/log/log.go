@@ -7,21 +7,15 @@ import (
 
 	"cloud.google.com/go/logging"
 	"cloud.google.com/go/logging/logadmin"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iterator"
-	"google.golang.org/api/option"
 )
+
+var pollInterval = 2 * time.Second
 
 // StreamLogs streams logs for a given project and filter to the provided channel.
 // It first sends the last 50 logs, then polls for new ones.
 func StreamLogs(ctx context.Context, projectID, filter string, logChan chan<- string) error {
-	// Explicitly find default credentials
-	creds, err := google.FindDefaultCredentials(ctx, logging.ReadScope)
-	if err != nil {
-		return fmt.Errorf("failed to find default credentials: %w", err)
-	}
-
-	client, err := logadmin.NewClient(ctx, projectID, option.WithCredentials(creds))
+	client, err := clientFactory(ctx, projectID)
 	if err != nil {
 		return fmt.Errorf("failed to create logging client: %w", err)
 	}
@@ -58,7 +52,7 @@ func StreamLogs(ctx context.Context, projectID, filter string, logChan chan<- st
 	}
 
 	// 2. Poll for new logs
-	ticker := time.NewTicker(2 * time.Second)
+	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
 
 	for {
@@ -80,9 +74,9 @@ func StreamLogs(ctx context.Context, projectID, filter string, logChan chan<- st
 				if err != nil {
 					// On error, maybe just log to channel or ignore transient errors
 					// For now, let's just break this poll loop and try again next tick
-					break 
+					break
 				}
-				
+
 				sendEntry(logChan, entry)
 				if entry.Timestamp.After(lastTimestamp) {
 					lastTimestamp = entry.Timestamp

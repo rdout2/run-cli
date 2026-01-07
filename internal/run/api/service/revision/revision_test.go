@@ -1,6 +1,7 @@
 package revision
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -9,6 +10,51 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// MockClient is a mock implementation of Client.
+type MockClient struct {
+	ListRevisionsFunc func(ctx context.Context, project, region, service string) ([]*runpb.Revision, error)
+}
+
+func (m *MockClient) ListRevisions(ctx context.Context, project, region, service string) ([]*runpb.Revision, error) {
+	if m.ListRevisionsFunc != nil {
+		return m.ListRevisionsFunc(ctx, project, region, service)
+	}
+	return nil, nil
+}
+
+func TestList(t *testing.T) {
+	originalClient := apiClient
+	defer func() { apiClient = originalClient }()
+
+	mock := &MockClient{}
+	apiClient = mock
+
+	mock.ListRevisionsFunc = func(ctx context.Context, project, region, service string) ([]*runpb.Revision, error) {
+		return []*runpb.Revision{{Name: "rev1"}}, nil
+	}
+
+	revisions, err := List("p", "r", "s")
+	assert.NoError(t, err)
+	assert.Len(t, revisions, 1)
+	assert.Equal(t, "rev1", revisions[0].Name)
+}
+
+func TestList_Error(t *testing.T) {
+	originalClient := apiClient
+	defer func() { apiClient = originalClient }()
+
+	mock := &MockClient{}
+	apiClient = mock
+
+	mock.ListRevisionsFunc = func(ctx context.Context, project, region, service string) ([]*runpb.Revision, error) {
+		return nil, assert.AnError
+	}
+
+	revisions, err := List("p", "r", "s")
+	assert.Error(t, err)
+	assert.Nil(t, revisions)
+}
 
 func TestMapRevision(t *testing.T) {
 	now := time.Now()
@@ -61,4 +107,17 @@ func TestMapRevision(t *testing.T) {
 	// Top level shortcuts
 	assert.True(t, result.CpuIdle)
 	assert.True(t, result.StartupCpuBoost)
+}
+
+func TestMapRevision_NilFields(t *testing.T) {
+	resp := &runpb.Revision{
+		Name: "projects/p/locations/l/services/s/revisions/my-rev",
+	}
+
+	result := mapRevision(resp, "my-service")
+
+	assert.Equal(t, "my-rev", result.Name)
+	assert.Empty(t, result.Containers)
+	assert.False(t, result.CpuIdle)
+	assert.Empty(t, result.Accelerator)
 }

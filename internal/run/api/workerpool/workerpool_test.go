@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/run/apiv2/runpb"
+	api_region "github.com/JulienBreux/run-cli/internal/run/api/region"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -102,6 +103,23 @@ func TestList_Error(t *testing.T) {
 	assert.Nil(t, pools)
 }
 
+func TestList_AllRegions(t *testing.T) {
+	originalClient := apiClient
+	defer func() { apiClient = originalClient }()
+
+	mock := &MockClient{}
+	apiClient = mock
+
+	mock.ListWorkerPoolsFunc = func(ctx context.Context, project, region string) ([]*runpb.WorkerPool, error) {
+		return []*runpb.WorkerPool{{Name: "projects/" + project + "/locations/" + region + "/workerPools/pool-" + region}}, nil
+	}
+
+	pools, err := List("p", api_region.ALL)
+	assert.NoError(t, err)
+	// We expect at least one pool per region. api_region.List() has > 0 regions.
+	assert.NotEmpty(t, pools)
+}
+
 func TestUpdateScaling(t *testing.T) {
 	originalClient := apiClient
 	defer func() { apiClient = originalClient }()
@@ -121,4 +139,41 @@ func TestUpdateScaling(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, int32(5), result.Scaling.ManualInstanceCount)
+}
+
+func TestUpdateScaling_GetError(t *testing.T) {
+	originalClient := apiClient
+	defer func() { apiClient = originalClient }()
+
+	mock := &MockClient{}
+	apiClient = mock
+
+	mock.GetWorkerPoolFunc = func(ctx context.Context, name string) (*runpb.WorkerPool, error) {
+		return nil, assert.AnError
+	}
+
+	result, err := UpdateScaling(context.Background(), "p", "r", "pool1", 5)
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to get worker pool")
+}
+
+func TestUpdateScaling_UpdateError(t *testing.T) {
+	originalClient := apiClient
+	defer func() { apiClient = originalClient }()
+
+	mock := &MockClient{}
+	apiClient = mock
+
+	mock.GetWorkerPoolFunc = func(ctx context.Context, name string) (*runpb.WorkerPool, error) {
+		return &runpb.WorkerPool{Name: name}, nil
+	}
+	mock.UpdateWorkerPoolFunc = func(ctx context.Context, workerPool *runpb.WorkerPool) (*runpb.WorkerPool, error) {
+		return nil, assert.AnError
+	}
+
+	result, err := UpdateScaling(context.Background(), "p", "r", "pool1", 5)
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "failed to update worker pool")
 }
