@@ -56,6 +56,12 @@ func List(app *tview.Application) *table.Table {
 	return listTable
 }
 
+// Load populates the table with the provided list of worker pools.
+func Load(newWorkers []model_workerpool.WorkerPool) {
+	workers = newWorkers
+	render(workers)
+}
+
 func ListReload(app *tview.Application, currentInfo info.Info, onResult func(error)) {
 	listTable.Table.Clear()
 	listTable.SetHeadersWithExpansions(listHeaders, listExpansions)

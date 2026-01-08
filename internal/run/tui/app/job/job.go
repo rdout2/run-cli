@@ -51,6 +51,12 @@ func List(app *tview.Application) *table.Table {
 	return listTable
 }
 
+// Load populates the table with the provided list of jobs.
+func Load(newJobs []model_job.Job) {
+	jobs = newJobs
+	render(jobs)
+}
+
 func ListReload(app *tview.Application, currentInfo info.Info, onResult func(error)) {
 	listTable.Table.Clear()
 	listTable.SetHeadersWithExpansions(listHeaders, listExpansions)
