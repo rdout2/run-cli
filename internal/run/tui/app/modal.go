@@ -6,6 +6,7 @@ import (
 	model_project "github.com/JulienBreux/run-cli/internal/run/model/common/project"
 	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
 	model_workerpool "github.com/JulienBreux/run-cli/internal/run/model/workerpool"
+	"github.com/JulienBreux/run-cli/internal/run/tui/app/credits"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/describe"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/log"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/project"
@@ -125,4 +126,19 @@ func openWorkerPoolScaleModal(w *model_workerpool.WorkerPool) {
 
 	header.ContextShortcutView.Clear()
 	app.SetFocus(scaleModal)
+}
+
+func openCreditsModal() {
+	c := credits.New(app, func() {
+		rootPages.RemovePage(credits.MODAL_PAGE_ID)
+		switchTo(previousPageID)
+	})
+
+	rootPages.AddPage(credits.MODAL_PAGE_ID, c, true, true)
+	previousPageID = currentPageID
+	currentPageID = credits.MODAL_PAGE_ID
+
+	header.ContextShortcutView.Clear()
+	app.SetFocus(c)
+	c.StartAnimation()
 }

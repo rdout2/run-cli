@@ -41,6 +41,11 @@ var (
 	footerPages   *tview.Pages
 	footerSpinner *spinner.Spinner
 	errorView     *tview.TextView
+
+	konamiBuffer []string
+	konamiCode   = []string{
+		"Up", "Up", "Down", "Down", "Left", "Right", "Left", "Right", "b", "a",
+	}
 )
 
 const (
@@ -173,6 +178,12 @@ func buildLayout() *tview.Flex {
 
 // shortcuts captures all key events.
 func shortcuts(event *tcell.EventKey) *tcell.EventKey {
+	// Konami Code Check
+	if checkKonamiCode(event) {
+		openCreditsModal()
+		return nil
+	}
+
 	// Disable shortcuts if we are still loading
 	frontPage, _ := rootPages.GetFrontPage()
 	if frontPage == LOADER_PAGE_ID {
@@ -383,4 +394,46 @@ func switchTo(pageID string) {
 		showLoading()
 		workerpool.ListReload(app, currentInfo, callback)
 	}
+}
+
+func checkKonamiCode(event *tcell.EventKey) bool {
+	var key string
+	switch event.Key() {
+	case tcell.KeyUp:
+		key = "Up"
+	case tcell.KeyDown:
+		key = "Down"
+	case tcell.KeyLeft:
+		key = "Left"
+	case tcell.KeyRight:
+		key = "Right"
+	case tcell.KeyRune:
+		key = string(event.Rune())
+	default:
+		konamiBuffer = nil
+		return false
+	}
+
+	konamiBuffer = append(konamiBuffer, key)
+
+	// Keep buffer limit
+	if len(konamiBuffer) > len(konamiCode) {
+		konamiBuffer = konamiBuffer[1:]
+	}
+
+	// Check match
+	if len(konamiBuffer) == len(konamiCode) {
+		match := true
+		for i, k := range konamiBuffer {
+			if k != konamiCode[i] {
+				match = false
+				break
+			}
+		}
+		if match {
+			konamiBuffer = nil
+			return true
+		}
+	}
+	return false
 }
