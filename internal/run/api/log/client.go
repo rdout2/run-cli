@@ -26,19 +26,48 @@ type ClientFactory func(ctx context.Context, projectID string) (Client, error)
 
 var clientFactory ClientFactory = NewGCPClient
 
+// Interfaces for mocking
+type LogAdminClientWrapper interface {
+	Entries(ctx context.Context, opts ...logadmin.EntriesOption) EntryIterator
+	Close() error
+}
+
+// Variables for dependency injection
+var findDefaultCredentials = google.FindDefaultCredentials
+var createLogAdminClient = func(ctx context.Context, projectID string, opts ...option.ClientOption) (LogAdminClientWrapper, error) {
+	c, err := logadmin.NewClient(ctx, projectID, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &RealLogAdminClient{client: c}, nil
+}
+
+// RealLogAdminClient wraps logadmin.Client.
+type RealLogAdminClient struct {
+	client *logadmin.Client
+}
+
+func (w *RealLogAdminClient) Entries(ctx context.Context, opts ...logadmin.EntriesOption) EntryIterator {
+	return &GCPEntryIterator{it: w.client.Entries(ctx, opts...)}
+}
+
+func (w *RealLogAdminClient) Close() error {
+	return w.client.Close()
+}
+
 // GCPClient is the Google Cloud Platform implementation of Client.
 type GCPClient struct {
-	client *logadmin.Client
+	client LogAdminClientWrapper
 }
 
 // NewGCPClient creates a new GCPClient.
 func NewGCPClient(ctx context.Context, projectID string) (Client, error) {
-	creds, err := google.FindDefaultCredentials(ctx, logging.ReadScope)
+	creds, err := findDefaultCredentials(ctx, logging.ReadScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find default credentials: %w", err)
 	}
 
-	c, err := logadmin.NewClient(ctx, projectID, option.WithCredentials(creds))
+	c, err := createLogAdminClient(ctx, projectID, option.WithCredentials(creds))
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +82,7 @@ func (c *GCPClient) Entries(ctx context.Context, opts ...interface{}) EntryItera
 			logOpts = append(logOpts, opt)
 		}
 	}
-	return &GCPEntryIterator{it: c.client.Entries(ctx, logOpts...)}
+	return c.client.Entries(ctx, logOpts...)
 }
 
 func (c *GCPClient) Close() error {

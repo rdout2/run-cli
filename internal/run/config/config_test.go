@@ -192,3 +192,108 @@ func TestSaveCreatesDir(t *testing.T) {
 		t.Fatalf("config file was not created")
 	}
 }
+
+func TestGetConfigPath_Error(t *testing.T) {
+	// Unset HOME to force error
+	oldHome := os.Getenv("HOME")
+	os.Unsetenv("HOME")
+	defer os.Setenv("HOME", oldHome)
+
+	_, err := config.GetConfigPath()
+	if err == nil {
+		t.Fatal("expected error when HOME is unset, but got nil")
+	}
+}
+
+func TestLoad_HomeDirError(t *testing.T) {
+	// Unset HOME to force error
+	oldHome := os.Getenv("HOME")
+	os.Unsetenv("HOME")
+	defer os.Setenv("HOME", oldHome)
+
+	_, err := config.Load()
+	if err == nil {
+		t.Fatal("expected error when HOME is unset, but got nil")
+	}
+}
+
+func TestLoad_ReadError(t *testing.T) {
+	// Create a temporary directory for the test
+	tmpDir, err := os.MkdirTemp("", "run-cli-test")
+	if err != nil {
+		t.Fatalf("failed to create temporary directory: %v", err)
+	}
+	t.Cleanup(func() {
+		os.RemoveAll(tmpDir)
+	})
+
+	// Set HOME
+	os.Setenv("HOME", tmpDir)
+	defer os.Unsetenv("HOME")
+
+	configPath := filepath.Join(tmpDir, ".run.yaml")
+	// Create file with no read permissions
+	if err := os.WriteFile(configPath, []byte(""), 0000); err != nil {
+		t.Fatalf("failed to create unreadable file: %v", err)
+	}
+
+	_, err = config.Load()
+	if err == nil {
+		t.Fatal("expected error when reading unreadable file, but got nil")
+	}
+}
+
+func TestSave_WriteError(t *testing.T) {
+	// Create a temporary directory for the test
+	tmpDir, err := os.MkdirTemp("", "run-cli-test")
+	if err != nil {
+		t.Fatalf("failed to create temporary directory: %v", err)
+	}
+	t.Cleanup(func() {
+		os.RemoveAll(tmpDir)
+	})
+
+	// Set HOME
+	os.Setenv("HOME", tmpDir)
+	defer os.Unsetenv("HOME")
+
+	// Create a directory where the config file should be
+	configPath := filepath.Join(tmpDir, ".run.yaml")
+	if err := os.Mkdir(configPath, 0755); err != nil {
+		t.Fatalf("failed to create directory blocking config file: %v", err)
+	}
+
+	cfg := &config.Config{Region: "us-central1"}
+	err = cfg.Save()
+	if err == nil {
+		t.Fatal("expected error when writing to a directory path, but got nil")
+	}
+}
+
+func TestSave_MkdirError(t *testing.T) {
+	// Create a temporary directory for the test
+	tmpDir, err := os.MkdirTemp("", "run-cli-test")
+	if err != nil {
+		t.Fatalf("failed to create temporary directory: %v", err)
+	}
+	t.Cleanup(func() {
+		os.Chmod(tmpDir, 0755) // Restore permissions for cleanup
+		os.RemoveAll(tmpDir)
+	})
+
+	// Make tmpDir read-only so we can't create subdirectories
+	if err := os.Chmod(tmpDir, 0500); err != nil {
+		t.Fatalf("failed to chmod temporary directory: %v", err)
+	}
+
+	// Set HOME to a subdirectory that doesn't exist
+	subdir := filepath.Join(tmpDir, "subdir")
+	os.Setenv("HOME", subdir)
+	defer os.Unsetenv("HOME")
+
+	cfg := &config.Config{Region: "us-central1"}
+	err = cfg.Save()
+	if err == nil {
+		t.Fatal("expected error when creating config directory in read-only parent, but got nil")
+	}
+}

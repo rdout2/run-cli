@@ -7,8 +7,11 @@ import (
 	"time"
 
 	"cloud.google.com/go/logging"
+	"cloud.google.com/go/logging/logadmin"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 )
 
 // MockClient is a mock implementation of Client.
@@ -201,4 +204,99 @@ func TestStreamLogs_PollingError(t *testing.T) {
 	case <-time.After(100 * time.Millisecond):
 		// passed
 	}
+}
+
+// --- Mocks for GCPClient testing ---
+
+type MockLogAdminClientWrapper struct {
+	EntriesFunc func(ctx context.Context, opts ...logadmin.EntriesOption) EntryIterator
+	CloseFunc   func() error
+}
+
+func (m *MockLogAdminClientWrapper) Entries(ctx context.Context, opts ...logadmin.EntriesOption) EntryIterator {
+	if m.EntriesFunc != nil {
+		return m.EntriesFunc(ctx, opts...)
+	}
+	return &MockEntryIterator{}
+}
+
+func (m *MockLogAdminClientWrapper) Close() error {
+	if m.CloseFunc != nil {
+		return m.CloseFunc()
+	}
+	return nil
+}
+
+func TestGCPClient(t *testing.T) {
+	origFindCreds := findDefaultCredentials
+	origCreateClient := createLogAdminClient
+	defer func() {
+		findDefaultCredentials = origFindCreds
+		createLogAdminClient = origCreateClient
+	}()
+
+	findDefaultCredentials = func(ctx context.Context, scopes ...string) (*google.Credentials, error) {
+		return &google.Credentials{}, nil
+	}
+
+	t.Run("NewGCPClient_Success", func(t *testing.T) {
+		createLogAdminClient = func(ctx context.Context, projectID string, opts ...option.ClientOption) (LogAdminClientWrapper, error) {
+			return &MockLogAdminClientWrapper{
+				EntriesFunc: func(ctx context.Context, opts ...logadmin.EntriesOption) EntryIterator {
+					return &MockEntryIterator{
+						Items: []*logging.Entry{{Payload: "log1"}},
+					}
+				},
+				CloseFunc: func() error { return nil },
+			}, nil
+		}
+
+		client, err := NewGCPClient(context.Background(), "project")
+		assert.NoError(t, err)
+
+		it := client.Entries(context.Background())
+		entry, err := it.Next()
+		assert.NoError(t, err)
+		assert.Equal(t, "log1", entry.Payload)
+		
+		assert.NoError(t, client.Close())
+	})
+
+	t.Run("NewGCPClient_AuthError", func(t *testing.T) {
+		findDefaultCredentials = func(ctx context.Context, scopes ...string) (*google.Credentials, error) {
+			return nil, errors.New("auth failed")
+		}
+		
+		_, err := NewGCPClient(context.Background(), "project")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to find default credentials")
+	})
+
+	t.Run("NewGCPClient_ClientCreationError", func(t *testing.T) {
+		findDefaultCredentials = func(ctx context.Context, scopes ...string) (*google.Credentials, error) {
+			return &google.Credentials{}, nil
+		}
+		createLogAdminClient = func(ctx context.Context, projectID string, opts ...option.ClientOption) (LogAdminClientWrapper, error) {
+			return nil, errors.New("creation failed")
+		}
+		
+		_, err := NewGCPClient(context.Background(), "project")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "creation failed")
+	})
+}
+
+func TestWrappers_Delegation(t *testing.T) {
+	// Expect panics because nil clients are used
+	
+	t.Run("RealLogAdminClient", func(t *testing.T) {
+		w := &RealLogAdminClient{client: nil}
+		assert.Panics(t, func() { w.Entries(context.Background()) })
+		assert.Panics(t, func() { w.Close() })
+	})
+	
+	t.Run("GCPEntryIterator", func(t *testing.T) {
+		it := &GCPEntryIterator{it: nil}
+		assert.Panics(t, func() { it.Next() })
+	})
 }
