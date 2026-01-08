@@ -9,6 +9,7 @@ import (
 	model_workerpool "github.com/JulienBreux/run-cli/internal/run/model/workerpool"
 	model_scaling "github.com/JulienBreux/run-cli/internal/run/model/workerpool/scaling"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
 )
@@ -43,6 +44,12 @@ func TestLoad(t *testing.T) {
 
 func TestListReload(t *testing.T) {
 	app := tview.NewApplication()
+	simScreen := tcell.NewSimulationScreen("UTF-8")
+	if err := simScreen.Init(); err != nil {
+		t.Fatalf("failed to init sim screen: %v", err)
+	}
+	app.SetScreen(simScreen)
+
 	List(app)
 
 	// Mock listWorkerPoolsFunc
@@ -76,6 +83,12 @@ func TestListReload(t *testing.T) {
 
 func TestListReload_Error(t *testing.T) {
 	app := tview.NewApplication()
+	simScreen := tcell.NewSimulationScreen("UTF-8")
+	if err := simScreen.Init(); err != nil {
+		t.Fatalf("failed to init sim screen: %v", err)
+	}
+	app.SetScreen(simScreen)
+
 	List(app)
 
 	originalListWorkerPoolsFunc := listWorkerPoolsFunc
