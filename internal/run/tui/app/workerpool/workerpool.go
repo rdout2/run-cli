@@ -44,6 +44,8 @@ const (
 	SCALE_MODAL_PAGE_ID = "scale-workerpool"
 )
 
+var listWorkerPoolsFunc = api_workerpool.List
+
 // List returns a list of workers.
 func List(app *tview.Application) *table.Table {
 	listTable = table.New(LIST_PAGE_TITLE)
@@ -64,7 +66,7 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 	go func() {
 		// Fetch real data
 		var err error
-		workers, err = api_workerpool.List(currentInfo.Project, currentInfo.Region)
+		workers, err = listWorkerPoolsFunc(currentInfo.Project, currentInfo.Region)
 
 		app.QueueUpdateDraw(func() {
 			defer func() {
@@ -79,30 +81,37 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 				return
 			}
 
-			for i, w := range workers {
-				var labels []string
-				for k, v := range w.Labels {
-					labels = append(labels, fmt.Sprintf("%s: %s", k, v))
-				}
-
-				scaling := "n/a"
-				if w.Scaling != nil {
-					scaling = fmt.Sprintf("Manual: %d", w.Scaling.ManualInstanceCount)
-				}
-
-				row := i + 1 // +1 for header row
-				listTable.Table.SetCell(row, 0, tview.NewTableCell(w.DisplayName))
-				listTable.Table.SetCell(row, 1, tview.NewTableCell(w.Region))
-				listTable.Table.SetCell(row, 2, tview.NewTableCell(humanize.Time(w.UpdateTime)))
-				listTable.Table.SetCell(row, 3, tview.NewTableCell(scaling))
-				listTable.Table.SetCell(row, 4, tview.NewTableCell(w.LastModifier))
-				listTable.Table.SetCell(row, 5, tview.NewTableCell(strings.Join(labels, ", ")))
-			}
-
-			// Refresh title
-			listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(workers)))
+			render(workers)
 		})
 	}()
+}
+
+func render(workers []model_workerpool.WorkerPool) {
+	listTable.Table.Clear()
+	listTable.SetHeadersWithExpansions(listHeaders, listExpansions)
+
+	for i, w := range workers {
+		var labels []string
+		for k, v := range w.Labels {
+			labels = append(labels, fmt.Sprintf("%s: %s", k, v))
+		}
+
+		scaling := "n/a"
+		if w.Scaling != nil {
+			scaling = fmt.Sprintf("Manual: %d", w.Scaling.ManualInstanceCount)
+		}
+
+		row := i + 1 // +1 for header row
+		listTable.Table.SetCell(row, 0, tview.NewTableCell(w.DisplayName))
+		listTable.Table.SetCell(row, 1, tview.NewTableCell(w.Region))
+		listTable.Table.SetCell(row, 2, tview.NewTableCell(humanize.Time(w.UpdateTime)))
+		listTable.Table.SetCell(row, 3, tview.NewTableCell(scaling))
+		listTable.Table.SetCell(row, 4, tview.NewTableCell(w.LastModifier))
+		listTable.Table.SetCell(row, 5, tview.NewTableCell(strings.Join(labels, ", ")))
+	}
+
+	// Refresh title
+	listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(workers)))
 }
 
 // GetSelectedWorkerPoolFull returns the full workerpool object for the selected row.

@@ -41,6 +41,8 @@ var (
 	tabs      = []string{"Revisions", "Observability", "Networking", "Security"}
 )
 
+var listRevisionsFunc = api_revision.List
+
 // Dashboard returns the dashboard primitive.
 func Dashboard(app *tview.Application) *tview.Flex {
 	dashboardHeader = tview.NewTextView().
@@ -332,7 +334,7 @@ func DashboardReload(app *tview.Application, currentInfo info.Info, service *mod
 
 	go func() {
 		var err error
-		dashboardRevisions, err = api_revision.List(currentInfo.Project, service.Region, service.Name)
+		dashboardRevisions, err = listRevisionsFunc(currentInfo.Project, service.Region, service.Name)
 
 		app.QueueUpdateDraw(func() {
 			revisionsTable.Table.Clear()

@@ -121,39 +121,12 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 	// Add buttons
 	form.AddButton("Save", func() {
 		// Get values from fields
-		var err error
-		var min, max, manual int64
 		_, mode := modeDropdown.GetCurrentOption()
-
-		if mode == "Manual" {
-			manual, err = strconv.ParseInt(manualInstancesField.GetText(), 10, 32)
-			if err != nil {
-				statusSpinner.SetText("[red]Invalid manual instance count")
-				return
-			}
-			min, max = 0, 0
-		} else { // Automatic
-			min, err = strconv.ParseInt(minInstancesField.GetText(), 10, 32)
-			if err != nil {
-				statusSpinner.SetText("[red]Invalid min instance count")
-				return
-			}
-
-			if maxInstancesField.GetText() != "" {
-				max, err = strconv.ParseInt(maxInstancesField.GetText(), 10, 32)
-				if err != nil {
-					statusSpinner.SetText("[red]Invalid max instance count")
-					return
-				}
-			} else {
-				max = 0
-			}
-
-			if max > 0 && min > max {
-				statusSpinner.SetText("[red]Min instances cannot be greater than Max instances")
-				return
-			}
-			manual = 0
+		min, max, manual, err := validateScaleParams(mode, manualInstancesField.GetText(), minInstancesField.GetText(), maxInstancesField.GetText())
+		
+		if err != nil {
+			statusSpinner.SetText(fmt.Sprintf("[red]%v", err))
+			return
 		}
 
 		// Start Animation
@@ -218,4 +191,35 @@ func Modal(app *tview.Application, service *model_service.Service, pages *tview.
 	updateForm() // Initial form setup
 
 	return grid
+}
+
+func validateScaleParams(mode, manualStr, minStr, maxStr string) (min, max, manual int64, err error) {
+	if mode == "Manual" {
+		manual, err = strconv.ParseInt(manualStr, 10, 32)
+		if err != nil {
+			return 0, 0, 0, fmt.Errorf("Invalid manual instance count")
+		}
+		return 0, 0, manual, nil
+	}
+	
+	// Automatic
+	min, err = strconv.ParseInt(minStr, 10, 32)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("Invalid min instance count")
+	}
+
+	if maxStr != "" {
+		max, err = strconv.ParseInt(maxStr, 10, 32)
+		if err != nil {
+			return 0, 0, 0, fmt.Errorf("Invalid max instance count")
+		}
+	} else {
+		max = 0
+	}
+
+	if max > 0 && min > max {
+		return 0, 0, 0, fmt.Errorf("Min instances cannot be greater than Max instances")
+	}
+	
+	return min, max, 0, nil
 }

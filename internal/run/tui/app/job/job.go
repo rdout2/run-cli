@@ -41,6 +41,8 @@ const (
 	LIST_PAGE_SHORTCUT = tcell.KeyCtrlJ
 )
 
+var listJobsFunc = api_job.List
+
 // List returns a list of jobs.
 func List(app *tview.Application) *table.Table {
 	listTable = table.New(LIST_PAGE_TITLE)
@@ -59,7 +61,7 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 	go func() {
 		// Fetch real data
 		var err error
-		jobs, err = api_job.List(currentInfo.Project, currentInfo.Region)
+		jobs, err = listJobsFunc(currentInfo.Project, currentInfo.Region)
 
 		app.QueueUpdateDraw(func() {
 			defer func() {
@@ -75,33 +77,40 @@ func ListReload(app *tview.Application, currentInfo info.Info, onResult func(err
 				return
 			}
 
-			for i, j := range jobs {
-				// Extract info
-				nameParts := strings.Split(j.Name, "/")
-				displayName := nameParts[len(nameParts)-1]
-
-				status := "-"
-				if j.TerminalCondition != nil {
-					status = j.TerminalCondition.State
-				}
-
-				lastExecuted := "-"
-				if j.LatestCreatedExecution != nil {
-					lastExecuted = humanize.Time(j.LatestCreatedExecution.CreateTime)
-				}
-
-				row := i + 1 // +1 for header row
-				listTable.Table.SetCell(row, 0, tview.NewTableCell(displayName))
-				listTable.Table.SetCell(row, 1, tview.NewTableCell(status))
-				listTable.Table.SetCell(row, 2, tview.NewTableCell(lastExecuted))
-				listTable.Table.SetCell(row, 3, tview.NewTableCell(j.Region))
-				listTable.Table.SetCell(row, 4, tview.NewTableCell(j.Creator))
-			}
-
-			// Refresh title
-			listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(jobs)))
+			render(jobs)
 		})
 	}()
+}
+
+func render(jobs []model_job.Job) {
+	listTable.Table.Clear()
+	listTable.SetHeadersWithExpansions(listHeaders, listExpansions)
+
+	for i, j := range jobs {
+		// Extract info
+		nameParts := strings.Split(j.Name, "/")
+		displayName := nameParts[len(nameParts)-1]
+
+		status := "-"
+		if j.TerminalCondition != nil {
+			status = j.TerminalCondition.State
+		}
+
+		lastExecuted := "-"
+		if j.LatestCreatedExecution != nil {
+			lastExecuted = humanize.Time(j.LatestCreatedExecution.CreateTime)
+		}
+
+		row := i + 1 // +1 for header row
+		listTable.Table.SetCell(row, 0, tview.NewTableCell(displayName))
+		listTable.Table.SetCell(row, 1, tview.NewTableCell(status))
+		listTable.Table.SetCell(row, 2, tview.NewTableCell(lastExecuted))
+		listTable.Table.SetCell(row, 3, tview.NewTableCell(j.Region))
+		listTable.Table.SetCell(row, 4, tview.NewTableCell(j.Creator))
+	}
+
+	// Refresh title
+	listTable.Table.SetTitle(fmt.Sprintf(" %s (%d) ", LIST_PAGE_TITLE, len(jobs)))
 }
 
 // GetSelectedJob returns the Name and Region of the selected job.

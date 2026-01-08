@@ -64,9 +64,9 @@ func Modal(app *tview.Application, workerPool *model_workerpool.WorkerPool, page
 	// Add buttons
 	form.AddButton("Save", func() {
 		// Get values from fields
-		count, err := strconv.ParseInt(instanceCountField.GetText(), 10, 32)
-		if err != nil || count < 0 {
-			statusSpinner.SetText("[red]Invalid instance count")
+		count, err := validateScaleParams(instanceCountField.GetText())
+		if err != nil {
+			statusSpinner.SetText(fmt.Sprintf("[red]%v", err))
 			return
 		}
 
@@ -130,4 +130,12 @@ func Modal(app *tview.Application, workerPool *model_workerpool.WorkerPool, page
 	})
 
 	return grid
+}
+
+func validateScaleParams(countStr string) (int64, error) {
+	count, err := strconv.ParseInt(countStr, 10, 32)
+	if err != nil || count < 0 {
+		return 0, fmt.Errorf("Invalid instance count")
+	}
+	return count, nil
 }

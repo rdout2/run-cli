@@ -44,9 +44,11 @@ const (
 	SCALE_MODAL_PAGE_ID = "scale"
 )
 
+var listServicesFunc = api_service.List
+
 // Fetch retrieves the list of services from the API.
 func Fetch(projectID, region string) ([]model_service.Service, error) {
-	return api_service.List(projectID, region)
+	return listServicesFunc(projectID, region)
 }
 
 // List returns a list of services.
