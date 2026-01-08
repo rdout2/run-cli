@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -203,7 +205,9 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 			}
 		}
 
-		_ = browser.OpenURL(u)
+		if !strings.HasSuffix(os.Args[0], ".test") {
+			_ = browser.OpenURL(u)
+		}
 		return nil
 	}
 	if event.Key() == service.LIST_PAGE_SHORTCUT {

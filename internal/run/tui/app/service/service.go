@@ -3,6 +3,8 @@ package service
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	api_service "github.com/JulienBreux/run-cli/internal/run/api/service"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
@@ -167,7 +169,7 @@ func HandleShortcuts(event *tcell.EventKey) *tcell.EventKey {
 	// Open URL
 	if event.Rune() == 'o' {
 		u := GetSelectedServiceURL()
-		if u != "" {
+		if u != "" && !strings.HasSuffix(os.Args[0], ".test") {
 			_ = browser.OpenURL(u)
 			return event
 		}
