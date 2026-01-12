@@ -25,7 +25,10 @@
 *   **Deep Insights:** Explore revision details including billing mode, startup CPU boost, concurrency, and request timeouts.
 *   **Resource Monitoring:** View container configurations, images, ports, and resource limits (Memory, CPU, and GPU/Accelerators).
 *   **Job Management:** Monitor and manage your Cloud Run jobs.
+*   **Job Dashboard:** Dedicated view for jobs including execution history and status.
+*   **Execution Management:** View detailed execution history with task success/failure counts, duration, and status.
 *   **Log Viewer:** Stream logs from your services directly in the terminal.
+*   **Konami Code:** Try the legendary code for a little surprise!
 *   **Project & Region Selection:** Easily switch between your Google Cloud projects and regions.
 
 ## 🚀 Installation
