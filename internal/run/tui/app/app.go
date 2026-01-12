@@ -50,7 +50,7 @@ var (
 
 const (
 	FULLSCREEN   = true
-	ENABLE_MOUSE = true
+	ENABLE_MOUSE = false
 
 	ESCAPE_SHORTCUT = tcell.KeyEscape
 	LOADER_PAGE_ID  = "loader"
