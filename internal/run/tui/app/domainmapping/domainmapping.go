@@ -166,14 +166,22 @@ func DNSRecordsModal(app *tview.Application, dm *model_domainmapping.DomainMappi
 
 	textView.SetBorder(true).SetTitle(" DNS Records ")
 
+	// Instructions
+	instructions := tview.NewTextView().
+		SetTextAlign(tview.AlignCenter).
+		SetText("Press 'q' or 'esc' to close")
+
 	// Button
 	btnOk := tview.NewButton("Ok").SetSelectedFunc(closeFunc)
 	
 	// Layout
-	// We use a Flex with a TextView and a Button
 	content := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(textView, 0, 1, true).
-		AddItem(btnOk, 1, 0, false)
+		AddItem(textView, 0, 1, false).
+		AddItem(instructions, 1, 0, false).
+		AddItem(tview.NewFlex().
+			AddItem(tview.NewBox(), 0, 1, false).
+			AddItem(btnOk, 10, 1, true).
+			AddItem(tview.NewBox(), 0, 1, false), 1, 0, true)
 
 	content.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape || event.Rune() == 'q' {
@@ -185,8 +193,8 @@ func DNSRecordsModal(app *tview.Application, dm *model_domainmapping.DomainMappi
 	
 	// Create a Grid to center the modal
 	grid := tview.NewGrid().
-		SetColumns(0, 60, 0).
-		SetRows(0, 15, 0).
+		SetColumns(0, 80, 0).
+		SetRows(0, 20, 0).
 		AddItem(content, 1, 1, 1, 1, 0, 0, true)
 
 	return grid

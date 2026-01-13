@@ -57,6 +57,7 @@ func subColumnGlobalShortcuts() *tview.TextView {
 	_, _ = fmt.Fprintf(view, "[dodgerblue]<ctrl-s> [white]Services\n")
 	_, _ = fmt.Fprintf(view, "[dodgerblue]<ctrl-j> [white]Jobs\n")
 	_, _ = fmt.Fprintf(view, "[dodgerblue]<ctrl-w> [white]Worker Pools\n")
+	_, _ = fmt.Fprintf(view, "[dodgerblue]<ctrl-d> [white]Domain Mappings\n")
 	// _, _ = fmt.Fprintf(view, "[dodgerblue]<ctrl-i> [white]Instances\n")
 	return view
 }
