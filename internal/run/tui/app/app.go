@@ -12,6 +12,7 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/config"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
+	"github.com/JulienBreux/run-cli/internal/run/tui/app/domainmapping"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/job"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/project"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/region"
@@ -154,6 +155,7 @@ func buildLayout() *tview.Flex {
 	pages.AddPage(service.LIST_PAGE_ID, service.List(app).Table, true, true)
 	pages.AddPage(job.LIST_PAGE_ID, job.List(app).Table, true, true)
 	pages.AddPage(workerpool.LIST_PAGE_ID, workerpool.List(app).Table, true, true)
+	pages.AddPage(domainmapping.LIST_PAGE_ID, domainmapping.List(app).Table, true, true)
 
 	// Dashboards
 	pages.AddPage(service.DASHBOARD_PAGE_ID, service.Dashboard(app), true, false)
@@ -232,6 +234,10 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 	}
 	if event.Key() == workerpool.LIST_PAGE_SHORTCUT {
 		switchTo(workerpool.LIST_PAGE_ID)
+		return nil
+	}
+	if event.Key() == domainmapping.LIST_PAGE_SHORTCUT {
+		switchTo(domainmapping.LIST_PAGE_ID)
 		return nil
 	}
 
@@ -352,6 +358,20 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 		}
 	}
 
+	// Domain Mapping List
+	if currentPageID == domainmapping.LIST_PAGE_ID {
+		if event.Key() == tcell.KeyEnter {
+			if dm := domainmapping.GetSelectedDomainMappingFull(); dm != nil {
+				openDomainMappingDNSRecordsModal(dm)
+			}
+			return nil
+		}
+		if event.Rune() == 'r' {
+			switchTo(domainmapping.LIST_PAGE_ID)
+			return nil
+		}
+	}
+
 	return event
 }
 
@@ -408,6 +428,10 @@ func switchTo(pageID string) {
 		workerpool.Shortcuts()
 		showLoading()
 		workerpool.ListReload(app, currentInfo, callback)
+	case domainmapping.LIST_PAGE_ID:
+		domainmapping.Shortcuts()
+		showLoading()
+		domainmapping.ListReload(app, currentInfo, callback)
 	}
 }
 

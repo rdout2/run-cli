@@ -44,6 +44,11 @@
 *   **Worker Pool Management:** View and manage your Cloud Run worker pools.
 *   **Scaling Control:** Monitor and adjust scaling settings.
 
+### 🌐 Domain Mappings
+
+*   **Domain Management:** View your custom domain mappings.
+*   **DNS Configuration:** Quickly access DNS record instructions for easy setup.
+
 ## 🚀 Installation
 
 Run CLI is available on Linux, OSX and Windows platforms.

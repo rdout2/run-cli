@@ -4,10 +4,12 @@ import (
 	"fmt"
 
 	model_project "github.com/JulienBreux/run-cli/internal/run/model/common/project"
+	model_domainmapping "github.com/JulienBreux/run-cli/internal/run/model/domainmapping"
 	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
 	model_workerpool "github.com/JulienBreux/run-cli/internal/run/model/workerpool"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/credits"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/describe"
+	"github.com/JulienBreux/run-cli/internal/run/tui/app/domainmapping"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/log"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/project"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/region"
@@ -138,7 +140,40 @@ func openCreditsModal() {
 	previousPageID = currentPageID
 	currentPageID = credits.MODAL_PAGE_ID
 
-	header.ContextShortcutView.Clear()
-	app.SetFocus(c)
-	c.StartAnimation()
-}
+		header.ContextShortcutView.Clear()
+
+		app.SetFocus(c)
+
+		c.StartAnimation()
+
+	}
+
+	
+
+	func openDomainMappingDNSRecordsModal(dm *model_domainmapping.DomainMapping) {
+
+		modal := domainmapping.DNSRecordsModal(app, dm, func() {
+
+			rootPages.RemovePage(domainmapping.MODAL_PAGE_ID)
+
+			switchTo(previousPageID)
+
+		})
+
+	
+
+		rootPages.AddPage(domainmapping.MODAL_PAGE_ID, modal, true, true)
+
+		previousPageID = currentPageID
+
+		currentPageID = domainmapping.MODAL_PAGE_ID
+
+	
+
+		header.ContextShortcutView.Clear()
+
+		app.SetFocus(modal)
+
+	}
+
+	
