@@ -306,6 +306,10 @@ func TestShortcuts_Modals(t *testing.T) {
 	currentPageID = service.LIST_PAGE_ID
 	
 	// Scale
+	// Ensure selection is preserved/re-applied
+	svcTable.Select(1, 0)
+	assert.NotNil(t, service.GetSelectedServiceFull(), "Service selection lost before Scale shortcut")
+
 	shortcuts(tcell.NewEventKey(tcell.KeyRune, 's', tcell.ModNone))
 	assert.Equal(t, service_scale.MODAL_PAGE_ID, currentPageID)
 	rootPages.RemovePage(service_scale.MODAL_PAGE_ID)
