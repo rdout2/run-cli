@@ -307,6 +307,8 @@ func TestShortcuts_Modals(t *testing.T) {
 	
 	// Scale
 	// Ensure selection is preserved/re-applied
+	// Re-load data to ensure state consistency
+	service.Load([]model_service.Service{{Name: "s1", Region: "r1"}})
 	svcTable.Select(1, 0)
 	assert.NotNil(t, service.GetSelectedServiceFull(), "Service selection lost before Scale shortcut")
 
@@ -357,6 +359,7 @@ func TestShortcuts_Modals(t *testing.T) {
 	
 	// Scale for WorkerPool
 	// Ensure selection is preserved/re-applied
+	workerpool.Load([]model_workerpool.WorkerPool{{DisplayName: "wp1", Region: "r1"}})
 	wpTable.Select(1, 0)
 	assert.NotNil(t, workerpool.GetSelectedWorkerPoolFull(), "WorkerPool selection lost before Scale shortcut")
 
