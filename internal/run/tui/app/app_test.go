@@ -356,6 +356,10 @@ func TestShortcuts_Modals(t *testing.T) {
 	currentPageID = workerpool.LIST_PAGE_ID
 	
 	// Scale for WorkerPool
+	// Ensure selection is preserved/re-applied
+	wpTable.Select(1, 0)
+	assert.NotNil(t, workerpool.GetSelectedWorkerPoolFull(), "WorkerPool selection lost before Scale shortcut")
+
 	shortcuts(tcell.NewEventKey(tcell.KeyRune, 's', tcell.ModNone))
 	assert.Equal(t, workerpool_scale.MODAL_PAGE_ID, currentPageID)
 	rootPages.RemovePage(workerpool_scale.MODAL_PAGE_ID)
