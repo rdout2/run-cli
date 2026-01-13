@@ -399,18 +399,18 @@ func TestWrappers_Delegation(t *testing.T) {
 	
 	t.Run("GCPJobsClientWrapper", func(t *testing.T) {
 		w := &GCPJobsClientWrapper{client: nil}
-		assert.Panics(t, func() { w.ListJobs(context.Background(), nil) })
-		assert.Panics(t, func() { w.RunJob(context.Background(), nil) })
-		assert.Panics(t, func() { w.Close() })
+		assert.Panics(t, func() { _ = w.ListJobs(context.Background(), nil) })
+		assert.Panics(t, func() { _, _ = w.RunJob(context.Background(), nil) })
+		assert.Panics(t, func() { _ = w.Close() })
 	})
 	
 	t.Run("GCPJobIteratorWrapper", func(t *testing.T) {
 		it := &GCPJobIteratorWrapper{it: nil}
-		assert.Panics(t, func() { it.Next() })
+		assert.Panics(t, func() { _, _ = it.Next() })
 	})
 	
 	t.Run("GCPRunJobOperationWrapper", func(t *testing.T) {
 		op := &GCPRunJobOperationWrapper{op: nil}
-		assert.Panics(t, func() { op.Wait(context.Background()) })
+		assert.Panics(t, func() { _, _ = op.Wait(context.Background()) })
 	})
 }

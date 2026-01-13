@@ -29,9 +29,7 @@ func TestStartStop(t *testing.T) {
 
 	// Run app in goroutine to process QueueUpdateDraw events
 	go func() {
-		if err := app.Run(); err != nil {
-			// app.Run() might return error when stopped, which is expected
-		}
+		_ = app.Run()
 	}()
 	
 	// Ensure app stops at end of test

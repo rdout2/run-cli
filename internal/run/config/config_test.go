@@ -196,8 +196,8 @@ func TestSaveCreatesDir(t *testing.T) {
 func TestGetConfigPath_Error(t *testing.T) {
 	// Unset HOME to force error
 	oldHome := os.Getenv("HOME")
-	os.Unsetenv("HOME")
-	defer os.Setenv("HOME", oldHome)
+	_ = os.Unsetenv("HOME")
+	defer func() { _ = os.Setenv("HOME", oldHome) }()
 
 	_, err := config.GetConfigPath()
 	if err == nil {
@@ -208,8 +208,8 @@ func TestGetConfigPath_Error(t *testing.T) {
 func TestLoad_HomeDirError(t *testing.T) {
 	// Unset HOME to force error
 	oldHome := os.Getenv("HOME")
-	os.Unsetenv("HOME")
-	defer os.Setenv("HOME", oldHome)
+	_ = os.Unsetenv("HOME")
+	defer func() { _ = os.Setenv("HOME", oldHome) }()
 
 	_, err := config.Load()
 	if err == nil {
@@ -224,12 +224,12 @@ func TestLoad_ReadError(t *testing.T) {
 		t.Fatalf("failed to create temporary directory: %v", err)
 	}
 	t.Cleanup(func() {
-		os.RemoveAll(tmpDir)
+		_ = os.RemoveAll(tmpDir)
 	})
 
 	// Set HOME
-	os.Setenv("HOME", tmpDir)
-	defer os.Unsetenv("HOME")
+	_ = os.Setenv("HOME", tmpDir)
+	defer func() { _ = os.Unsetenv("HOME") }()
 
 	configPath := filepath.Join(tmpDir, ".run.yaml")
 	// Create file with no read permissions
@@ -250,12 +250,12 @@ func TestSave_WriteError(t *testing.T) {
 		t.Fatalf("failed to create temporary directory: %v", err)
 	}
 	t.Cleanup(func() {
-		os.RemoveAll(tmpDir)
+		_ = os.RemoveAll(tmpDir)
 	})
 
 	// Set HOME
-	os.Setenv("HOME", tmpDir)
-	defer os.Unsetenv("HOME")
+	_ = os.Setenv("HOME", tmpDir)
+	defer func() { _ = os.Unsetenv("HOME") }()
 
 	// Create a directory where the config file should be
 	configPath := filepath.Join(tmpDir, ".run.yaml")
@@ -277,8 +277,8 @@ func TestSave_MkdirError(t *testing.T) {
 		t.Fatalf("failed to create temporary directory: %v", err)
 	}
 	t.Cleanup(func() {
-		os.Chmod(tmpDir, 0755) // Restore permissions for cleanup
-		os.RemoveAll(tmpDir)
+		_ = os.Chmod(tmpDir, 0755) // Restore permissions for cleanup
+		_ = os.RemoveAll(tmpDir)
 	})
 
 	// Make tmpDir read-only so we can't create subdirectories
@@ -288,8 +288,8 @@ func TestSave_MkdirError(t *testing.T) {
 
 	// Set HOME to a subdirectory that doesn't exist
 	subdir := filepath.Join(tmpDir, "subdir")
-	os.Setenv("HOME", subdir)
-	defer os.Unsetenv("HOME")
+	_ = os.Setenv("HOME", subdir)
+	defer func() { _ = os.Unsetenv("HOME") }()
 
 	cfg := &config.Config{Region: "us-central1"}
 	err = cfg.Save()

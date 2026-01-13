@@ -43,8 +43,8 @@ func TestModalCallbacks(t *testing.T) {
 	
 	// Create temp home for config save
 	tmpDir, _ := os.MkdirTemp("", "run-cli-app-test")
-	defer os.RemoveAll(tmpDir)
-	os.Setenv("HOME", tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
+	_ = os.Setenv("HOME", tmpDir)
 	
 	// 1. Project Callback
 	project.CachedProjects = []model_project.Project{{Name: "new-p"}}

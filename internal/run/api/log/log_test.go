@@ -292,12 +292,12 @@ func TestWrappers_Delegation(t *testing.T) {
 	
 	t.Run("RealLogAdminClient", func(t *testing.T) {
 		w := &RealLogAdminClient{client: nil}
-		assert.Panics(t, func() { w.Entries(context.Background()) })
-		assert.Panics(t, func() { w.Close() })
+		assert.Panics(t, func() { _ = w.Entries(context.Background()) })
+		assert.Panics(t, func() { _ = w.Close() })
 	})
 	
 	t.Run("GCPEntryIterator", func(t *testing.T) {
 		it := &GCPEntryIterator{it: nil}
-		assert.Panics(t, func() { it.Next() })
+		assert.Panics(t, func() { _, _ = it.Next() })
 	})
 }

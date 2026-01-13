@@ -32,7 +32,7 @@ func (c *GCPClient) ListRevisions(ctx context.Context, project, region, service 
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	req := &runpb.ListRevisionsRequest{
 		Parent: fmt.Sprintf("projects/%s/locations/%s/services/%s", project, region, service),

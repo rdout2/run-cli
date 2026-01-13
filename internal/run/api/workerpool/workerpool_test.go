@@ -409,19 +409,19 @@ func TestWrappers_Delegation(t *testing.T) {
 	
 	t.Run("GCPWorkerPoolsClientWrapper", func(t *testing.T) {
 		w := &GCPWorkerPoolsClientWrapper{client: nil}
-		assert.Panics(t, func() { w.ListWorkerPools(context.Background(), nil) })
-		assert.Panics(t, func() { w.GetWorkerPool(context.Background(), nil) })
-		assert.Panics(t, func() { w.UpdateWorkerPool(context.Background(), nil) })
-		assert.Panics(t, func() { w.Close() })
+		assert.Panics(t, func() { _ = w.ListWorkerPools(context.Background(), nil) })
+		assert.Panics(t, func() { _, _ = w.GetWorkerPool(context.Background(), nil) })
+		assert.Panics(t, func() { _, _ = w.UpdateWorkerPool(context.Background(), nil) })
+		assert.Panics(t, func() { _ = w.Close() })
 	})
 	
 	t.Run("GCPWorkerPoolIteratorWrapper", func(t *testing.T) {
 		it := &GCPWorkerPoolIteratorWrapper{it: nil}
-		assert.Panics(t, func() { it.Next() })
+		assert.Panics(t, func() { _, _ = it.Next() })
 	})
 	
 	t.Run("GCPUpdateWorkerPoolOperationWrapper", func(t *testing.T) {
 		op := &GCPUpdateWorkerPoolOperationWrapper{op: nil}
-		assert.Panics(t, func() { op.Wait(context.Background()) })
+		assert.Panics(t, func() { _, _ = op.Wait(context.Background()) })
 	})
 }

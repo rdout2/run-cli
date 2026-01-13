@@ -93,7 +93,7 @@ func TestGetSelectedService(t *testing.T) {
 	
 	// Test Header selection (Row 0)
 	listTable.Table.Select(0, 0)
-	name, region = GetSelectedService()
+	name, _ = GetSelectedService()
 	assert.Equal(t, "", name)
 	
 	s = GetSelectedServiceFull()

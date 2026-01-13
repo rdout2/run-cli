@@ -491,19 +491,19 @@ func TestWrappers_Delegation(t *testing.T) {
 	
 	t.Run("GCPServicesClientWrapper", func(t *testing.T) {
 		w := &GCPServicesClientWrapper{client: nil}
-		assert.Panics(t, func() { w.ListServices(context.Background(), nil) })
-		assert.Panics(t, func() { w.GetService(context.Background(), nil) })
-		assert.Panics(t, func() { w.UpdateService(context.Background(), nil) })
-		assert.Panics(t, func() { w.Close() })
+		assert.Panics(t, func() { _ = w.ListServices(context.Background(), nil) })
+		assert.Panics(t, func() { _, _ = w.GetService(context.Background(), nil) })
+		assert.Panics(t, func() { _, _ = w.UpdateService(context.Background(), nil) })
+		assert.Panics(t, func() { _ = w.Close() })
 	})
 	
 	t.Run("GCPServiceIteratorWrapper", func(t *testing.T) {
 		it := &GCPServiceIteratorWrapper{it: nil}
-		assert.Panics(t, func() { it.Next() })
+		assert.Panics(t, func() { _, _ = it.Next() })
 	})
 	
 	t.Run("GCPUpdateServiceOperationWrapper", func(t *testing.T) {
 		op := &GCPUpdateServiceOperationWrapper{op: nil}
-		assert.Panics(t, func() { op.Wait(context.Background()) })
+		assert.Panics(t, func() { _, _ = op.Wait(context.Background()) })
 	})
 }

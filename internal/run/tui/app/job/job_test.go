@@ -150,7 +150,7 @@ func TestGetSelectedJob(t *testing.T) {
 
 	// Test header selection
 	listTable.Table.Select(0, 0)
-	name, region = GetSelectedJob()
+	name, _ = GetSelectedJob()
 	assert.Equal(t, "", name)
 
 	jFull := GetSelectedJobFull()

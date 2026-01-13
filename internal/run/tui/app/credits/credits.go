@@ -140,7 +140,7 @@ func (c *CreditsPage) update() {
 }
 
 func (c *CreditsPage) Draw(screen tcell.Screen) {
-	c.Box.DrawForSubclass(screen, c)
+	c.DrawForSubclass(screen, c)
 	x, y, w, h := c.GetInnerRect()
 	if w <= 0 || h <= 0 {
 		return

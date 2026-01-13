@@ -12,7 +12,7 @@ func TestGetInfo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create configurations directory
 	configDir := filepath.Join(tmpDir, "configurations")
@@ -92,7 +92,7 @@ func TestGetInfo_Defaults(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	configDir := filepath.Join(tmpDir, "configurations")
 	if err := os.MkdirAll(configDir, 0755); err != nil {

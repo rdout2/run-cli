@@ -87,7 +87,7 @@ func TestDashboardReload(t *testing.T) {
 		time.Sleep(1 * time.Second)
 		app.Stop()
 	}()
-	app.Run()
+	_ = app.Run()
 
 	// Assertions
 	assert.Equal(t, mockJob, dashboardJob)

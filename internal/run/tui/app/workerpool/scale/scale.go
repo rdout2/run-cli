@@ -135,7 +135,7 @@ func Modal(app *tview.Application, workerPool *model_workerpool.WorkerPool, page
 func validateScaleParams(countStr string) (int64, error) {
 	count, err := strconv.ParseInt(countStr, 10, 32)
 	if err != nil || count < 0 {
-		return 0, fmt.Errorf("Invalid instance count")
+		return 0, fmt.Errorf("invalid instance count")
 	}
 	return count, nil
 }

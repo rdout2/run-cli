@@ -197,7 +197,7 @@ func validateScaleParams(mode, manualStr, minStr, maxStr string) (min, max, manu
 	if mode == "Manual" {
 		manual, err = strconv.ParseInt(manualStr, 10, 32)
 		if err != nil {
-			return 0, 0, 0, fmt.Errorf("Invalid manual instance count")
+			return 0, 0, 0, fmt.Errorf("invalid manual instance count")
 		}
 		return 0, 0, manual, nil
 	}
@@ -205,20 +205,20 @@ func validateScaleParams(mode, manualStr, minStr, maxStr string) (min, max, manu
 	// Automatic
 	min, err = strconv.ParseInt(minStr, 10, 32)
 	if err != nil {
-		return 0, 0, 0, fmt.Errorf("Invalid min instance count")
+		return 0, 0, 0, fmt.Errorf("invalid min instance count")
 	}
 
 	if maxStr != "" {
 		max, err = strconv.ParseInt(maxStr, 10, 32)
 		if err != nil {
-			return 0, 0, 0, fmt.Errorf("Invalid max instance count")
+			return 0, 0, 0, fmt.Errorf("invalid max instance count")
 		}
 	} else {
 		max = 0
 	}
 
 	if max > 0 && min > max {
-		return 0, 0, 0, fmt.Errorf("Min instances cannot be greater than Max instances")
+		return 0, 0, 0, fmt.Errorf("min instances cannot be greater than max instances")
 	}
 	
 	return min, max, 0, nil
