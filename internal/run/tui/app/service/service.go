@@ -185,6 +185,7 @@ func Shortcuts() {
 [dodgerblue]<d> [white]Describe
 [dodgerblue]<l> [white]Logs
 [dodgerblue]<s> [white]Scale
-[dodgerblue]<o> [white]Open URL`
+[dodgerblue]<o> [white]Open URL
+[dodgerblue]<enter> [white]Details`
 	header.ContextShortcutView.SetText(shortcuts)
 }

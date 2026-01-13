@@ -12,6 +12,7 @@ type DomainMapping struct {
 	RouteName  string           `json:"routeName"`
 	Region     string           `json:"region"`
 	Project    string           `json:"project"`
+	Creator    string           `json:"creator"`
 	Records    []ResourceRecord `json:"records"`
 	CreateTime time.Time        `json:"createTime"`
 	UpdateTime time.Time        `json:"updateTime"`

@@ -17,21 +17,17 @@ import (
 var (
 	listHeaders = []string{
 		"DOMAIN",
-		"SERVICE",
-		"RECORD TYPE",
-		"STATE",
+		"MAPPED TO",
 		"REGION",
-		"CREATED",
-		"UPDATED"}
+		"ADDED BY",
+		"CREATED"}
 
 	listExpansions = []int{
 		2, // DOMAIN
-		2, // SERVICE
-		1, // RECORD TYPE
-		1, // STATE
+		2, // MAPPED TO
 		1, // REGION
+		2, // ADDED BY
 		2, // CREATED
-		2, // UPDATED
 	}
 
 	listTable      *table.Table
@@ -100,30 +96,11 @@ func render(dms []model_domainmapping.DomainMapping) {
 	for i, dm := range dms {
 		row := i + 1 // +1 for header row
 
-		recordType := "n/a"
-		if len(dm.Records) > 0 {
-			recordType = dm.Records[0].Type
-		}
-
-		state := "Unknown"
-		for _, c := range dm.Conditions {
-			if c.Type == "Ready" {
-				if c.State == "True" {
-					state = "Ready"
-				} else {
-					state = c.Message
-				}
-				break
-			}
-		}
-
 		listTable.Table.SetCell(row, 0, tview.NewTableCell(dm.Name))
 		listTable.Table.SetCell(row, 1, tview.NewTableCell(dm.RouteName))
-		listTable.Table.SetCell(row, 2, tview.NewTableCell(recordType))
-		listTable.Table.SetCell(row, 3, tview.NewTableCell(state))
-		listTable.Table.SetCell(row, 4, tview.NewTableCell(dm.Region))
-		listTable.Table.SetCell(row, 5, tview.NewTableCell(humanize.Time(dm.CreateTime)))
-		listTable.Table.SetCell(row, 6, tview.NewTableCell(humanize.Time(dm.UpdateTime)))
+		listTable.Table.SetCell(row, 2, tview.NewTableCell(dm.Region))
+		listTable.Table.SetCell(row, 3, tview.NewTableCell(dm.Creator))
+		listTable.Table.SetCell(row, 4, tview.NewTableCell(humanize.Time(dm.CreateTime)))
 	}
 
 	// Refresh title
@@ -139,22 +116,56 @@ func GetSelectedDomainMappingFull() *model_domainmapping.DomainMapping {
 	return &domainMappings[row-1]
 }
 
+// GetSelectedDomainURL returns the URL of the currently selected domain mapping.
+func GetSelectedDomainURL() string {
+	row, _ := listTable.Table.GetSelection()
+	if row < 1 { // Header row or no selection
+		return ""
+	}
+	// 0: Domain
+	domain := listTable.Table.GetCell(row, 0).Text
+	return fmt.Sprintf("https://%s", domain)
+}
+
 func Shortcuts() {
 	header.ContextShortcutView.Clear()
 	shortcuts := `[dodgerblue]<r> [white]Refresh
-[dodgerblue]<enter> [white]DNS Records`
+[dodgerblue]<o> [white]Open URL
+[dodgerblue]<enter> [white]Info`
 	header.ContextShortcutView.SetText(shortcuts)
 }
 
-// DNSRecordsModal creates a modal to display DNS records for the domain mapping.
-func DNSRecordsModal(app *tview.Application, dm *model_domainmapping.DomainMapping, closeFunc func()) tview.Primitive {
+// DomainMappingInfoModal creates a modal to display info for the domain mapping.
+func DomainMappingInfoModal(app *tview.Application, dm *model_domainmapping.DomainMapping, closeFunc func()) tview.Primitive {
 	var sb strings.Builder
+
+	// Status Section
+	fmt.Fprintln(&sb, "[yellow::b]Status[white::-]")
+	state := "Unknown"
+	message := ""
+	for _, c := range dm.Conditions {
+		if c.Type == "Ready" {
+			if c.State == "True" {
+				state = "Ready"
+			} else {
+				state = "Not Ready"
+				message = c.Message
+			}
+			break
+		}
+	}
+	fmt.Fprintf(&sb, "  [lightcyan]State:[white] %s\n", state)
+	if message != "" {
+		fmt.Fprintf(&sb, "  [lightcyan]Message:[white] %s\n", message)
+	}
+	fmt.Fprintln(&sb, "")
+
+	// DNS Records Section
+	fmt.Fprintln(&sb, "[yellow::b]DNS Records[white::-]")
 	for _, r := range dm.Records {
-		fmt.Fprintf(&sb, "[yellow::b]Type:[white] %s\n", r.Type)
-		fmt.Fprintf(&sb, "[yellow::b]Name:[white] %s\n", r.Name)
-		fmt.Fprintf(&sb, "[yellow::b]Data:[white] %s\n", r.RRData)
-		// TTL is not in the resource record struct currently, but usually present. 
-		// For now we omit or hardcode if we had it.
+		fmt.Fprintf(&sb, "  [lightcyan]Type:[white] %s\n", r.Type)
+		fmt.Fprintf(&sb, "  [lightcyan]Name:[white] %s\n", r.Name)
+		fmt.Fprintf(&sb, "  [lightcyan]Data:[white] %s\n", r.RRData)
 		fmt.Fprintf(&sb, "\n")
 	}
 
@@ -164,24 +175,17 @@ func DNSRecordsModal(app *tview.Application, dm *model_domainmapping.DomainMappi
 		SetWrap(true).
 		SetScrollable(true)
 
-	textView.SetBorder(true).SetTitle(" DNS Records ")
+	textView.SetBorder(true).SetTitle(" Domain Mapping Info ")
 
 	// Instructions
 	instructions := tview.NewTextView().
 		SetTextAlign(tview.AlignCenter).
 		SetText("Press 'q' or 'esc' to close")
 
-	// Button
-	btnOk := tview.NewButton("Ok").SetSelectedFunc(closeFunc)
-	
 	// Layout
 	content := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(textView, 0, 1, false).
-		AddItem(instructions, 1, 0, false).
-		AddItem(tview.NewFlex().
-			AddItem(tview.NewBox(), 0, 1, false).
-			AddItem(btnOk, 10, 1, true).
-			AddItem(tview.NewBox(), 0, 1, false), 1, 0, true)
+		AddItem(textView, 0, 1, true).
+		AddItem(instructions, 1, 0, false)
 
 	content.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape || event.Rune() == 'q' {

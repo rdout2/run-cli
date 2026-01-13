@@ -85,8 +85,9 @@ func mapDomainMapping(resp *run.DomainMapping, project, region string) model.Dom
 		routeName = resp.Spec.RouteName
 	}
 	
-	var createTime time.Time
+	createTime := time.Time{}
 	name := ""
+	creator := ""
 	if resp.Metadata != nil {
 		name = resp.Metadata.Name
 		if resp.Metadata.CreationTimestamp != "" {
@@ -95,6 +96,9 @@ func mapDomainMapping(resp *run.DomainMapping, project, region string) model.Dom
 				createTime = t
 			}
 		}
+		if resp.Metadata.Annotations != nil {
+			creator = resp.Metadata.Annotations["serving.knative.dev/creator"]
+		}
 	}
 
 	return model.DomainMapping{
@@ -102,6 +106,7 @@ func mapDomainMapping(resp *run.DomainMapping, project, region string) model.Dom
 		RouteName:  routeName,
 		Region:     region,
 		Project:    project,
+		Creator:    creator,
 		Records:    records,
 		CreateTime: createTime,
 		Conditions: conditions,

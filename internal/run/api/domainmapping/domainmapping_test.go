@@ -27,6 +27,9 @@ func TestMapDomainMapping(t *testing.T) {
 		Metadata: &run.ObjectMeta{
 			Name:              "example.com",
 			CreationTimestamp: now,
+			Annotations: map[string]string{
+				"serving.knative.dev/creator": "user@example.com",
+			},
 		},
 		Spec: &run.DomainMappingSpec{
 			RouteName: "my-service",
@@ -54,6 +57,7 @@ func TestMapDomainMapping(t *testing.T) {
 	assert.Equal(t, "example.com", result.Name)
 	assert.Equal(t, "my-service", result.RouteName)
 	assert.Equal(t, "my-project", result.Project)
+	assert.Equal(t, "user@example.com", result.Creator)
 	assert.Equal(t, "us-central1", result.Region)
 	assert.Len(t, result.Records, 1)
 	assert.Equal(t, "CNAME", result.Records[0].Type)

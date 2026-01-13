@@ -362,12 +362,19 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 	if currentPageID == domainmapping.LIST_PAGE_ID {
 		if event.Key() == tcell.KeyEnter {
 			if dm := domainmapping.GetSelectedDomainMappingFull(); dm != nil {
-				openDomainMappingDNSRecordsModal(dm)
+				openDomainMappingInfoModal(dm)
 			}
 			return nil
 		}
 		if event.Rune() == 'r' {
 			switchTo(domainmapping.LIST_PAGE_ID)
+			return nil
+		}
+		if event.Rune() == 'o' {
+			u := domainmapping.GetSelectedDomainURL()
+			if u != "" && !strings.HasSuffix(os.Args[0], ".test") {
+				_ = browser.OpenURL(u)
+			}
 			return nil
 		}
 	}

@@ -140,40 +140,42 @@ func openCreditsModal() {
 	previousPageID = currentPageID
 	currentPageID = credits.MODAL_PAGE_ID
 
-		header.ContextShortcutView.Clear()
+			header.ContextShortcutView.Clear()
 
-		app.SetFocus(c)
+			app.SetFocus(c)
 
-		c.StartAnimation()
+			c.StartAnimation()
 
-	}
+		}
 
-	
+		
 
-	func openDomainMappingDNSRecordsModal(dm *model_domainmapping.DomainMapping) {
+		func openDomainMappingInfoModal(dm *model_domainmapping.DomainMapping) {
 
-		modal := domainmapping.DNSRecordsModal(app, dm, func() {
+			modal := domainmapping.DomainMappingInfoModal(app, dm, func() {
 
-			rootPages.RemovePage(domainmapping.MODAL_PAGE_ID)
+				rootPages.RemovePage(domainmapping.MODAL_PAGE_ID)
 
-			switchTo(previousPageID)
+				switchTo(previousPageID)
 
-		})
+			})
 
-	
+		
 
-		rootPages.AddPage(domainmapping.MODAL_PAGE_ID, modal, true, true)
+			rootPages.AddPage(domainmapping.MODAL_PAGE_ID, modal, true, true)
 
-		previousPageID = currentPageID
+			previousPageID = currentPageID
 
-		currentPageID = domainmapping.MODAL_PAGE_ID
+			currentPageID = domainmapping.MODAL_PAGE_ID
 
-	
+		
 
-		header.ContextShortcutView.Clear()
+			header.ContextShortcutView.Clear()
 
-		app.SetFocus(modal)
+			app.SetFocus(modal)
 
-	}
+		}
+
+		
 
 	
