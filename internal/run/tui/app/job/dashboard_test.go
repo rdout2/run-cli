@@ -10,12 +10,19 @@ import (
 	model_job "github.com/JulienBreux/run-cli/internal/run/model/job"
 	model_execution "github.com/JulienBreux/run-cli/internal/run/model/job/execution"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDashboard(t *testing.T) {
 	app := tview.NewApplication()
+	screen := tcell.NewSimulationScreen("UTF-8")
+	if err := screen.Init(); err != nil {
+		t.Fatal(err)
+	}
+	app.SetScreen(screen)
+
 	d := Dashboard(app)
 	assert.NotNil(t, d)
 	assert.Equal(t, 2, dashboardFlex.GetItemCount())
@@ -23,6 +30,12 @@ func TestDashboard(t *testing.T) {
 
 func TestDashboardReload(t *testing.T) {
 	app := tview.NewApplication()
+	screen := tcell.NewSimulationScreen("UTF-8")
+	if err := screen.Init(); err != nil {
+		t.Fatal(err)
+	}
+	app.SetScreen(screen)
+
 	Dashboard(app) // Initialize
 
 	// Mock Data
@@ -71,7 +84,7 @@ func TestDashboardReload(t *testing.T) {
 
 	// Wait for async update
 	go func() {
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 		app.Stop()
 	}()
 	app.Run()

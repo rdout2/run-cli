@@ -8,7 +8,7 @@ lint: ## Lint code
 	golangci-lint run
 
 test: ## Test packages
-	go test -count=1 -cover -coverprofile=coverage.txt -v ./...
+	go test -count=1 -failfast -cover -coverprofile=coverage.txt -v ./...
 
 coverage: ## Test coverage with default output
 	go tool cover -func=coverage.txt
