@@ -42,7 +42,7 @@ func Dashboard(app *tview.Application) *tview.Flex {
 	dashboardPages = tview.NewPages()
 
 	// Executions View
-	dashboardPages.AddPage("Executions", buildExecutionsTab(app), true, true)
+	dashboardPages.AddPage("Executions", buildExecutionsTab(), true, true)
 
 	dashboardFlex = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(dashboardHeader, 1, 0, false).
@@ -51,7 +51,7 @@ func Dashboard(app *tview.Application) *tview.Flex {
 	return dashboardFlex
 }
 
-func buildExecutionsTab(app *tview.Application) tview.Primitive {
+func buildExecutionsTab() tview.Primitive {
 	executionsTable = table.New(" Executions ")
 	executionsTable.SetHeadersWithExpansions(
 		[]string{"NAME", "STATUS", "CREATED", "DURATION", "TASKS (S/F)"},
@@ -85,7 +85,7 @@ func updateExecutionDetail(row int) {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "[lightcyan]Name:[white] %s\n", shortName(exec.Name))
 	fmt.Fprintf(&sb, "[lightcyan]Created:[white] %s\n", exec.CreateTime.Format("2006-01-02 15:04:05"))
-	
+
 	status := "Unknown"
 	if exec.TerminalCondition != nil {
 		status = exec.TerminalCondition.State
@@ -94,13 +94,13 @@ func updateExecutionDetail(row int) {
 		}
 	}
 	fmt.Fprintf(&sb, "[lightcyan]Status:[white] %s\n", status)
-	
+
 	duration := "-"
 	if !exec.CompletionTime.IsZero() {
 		duration = exec.CompletionTime.Sub(exec.StartTime).String()
 	}
 	fmt.Fprintf(&sb, "[lightcyan]Duration:[white] %s\n", duration)
-	
+
 	fmt.Fprintln(&sb, "")
 	fmt.Fprintln(&sb, "[yellow::b]Tasks[white::-]")
 	fmt.Fprintf(&sb, "  [lightcyan]Total:[white] %d\n", exec.TaskCount)
@@ -146,8 +146,8 @@ func DashboardReload(app *tview.Application, currentInfo info.Info, job *model_j
 				if !exec.CompletionTime.IsZero() {
 					duration = exec.CompletionTime.Sub(exec.StartTime).Round(time.Second).String()
 				}
-				
-			tasks := fmt.Sprintf("%d (%d/%d)", exec.TaskCount, exec.SucceededCount, exec.FailedCount)
+
+				tasks := fmt.Sprintf("%d (%d/%d)", exec.TaskCount, exec.SucceededCount, exec.FailedCount)
 
 				executionsTable.Table.SetCell(row, 0, tview.NewTableCell(shortName(exec.Name)))
 				executionsTable.Table.SetCell(row, 1, tview.NewTableCell(status))

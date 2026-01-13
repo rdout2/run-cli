@@ -57,13 +57,13 @@ func Dashboard(app *tview.Application) *tview.Flex {
 	dashboardPages = tview.NewPages()
 
 	// Revisions Tab
-	dashboardPages.AddPage(tabs[0], buildRevisionsTab(app), true, true)
+	dashboardPages.AddPage(tabs[0], buildRevisionsTab(), true, true)
 	// Observability Tab
 	dashboardPages.AddPage(tabs[1], tview.NewBox().SetTitle(" Observability (Placeholder) ").SetBorder(true), true, false)
 	// Networking Tab
-	dashboardPages.AddPage(tabs[2], buildNetworkingTab(app), true, false)
+	dashboardPages.AddPage(tabs[2], buildNetworkingTab(), true, false)
 	// Security Tab
-	dashboardPages.AddPage(tabs[3], buildSecurityTab(app), true, false)
+	dashboardPages.AddPage(tabs[3], buildSecurityTab(), true, false)
 
 	dashboardFlex = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(dashboardHeader, 1, 0, false).
@@ -87,7 +87,7 @@ func Dashboard(app *tview.Application) *tview.Flex {
 	return dashboardFlex
 }
 
-func buildRevisionsTab(app *tview.Application) tview.Primitive {
+func buildRevisionsTab() tview.Primitive {
 	revisionsTable = table.New(" Revisions ")
 	revisionsTable.SetHeadersWithExpansions(
 		[]string{"NAME", "TRAFFIC", "DEPLOYED", "REVISION TAGS"},
@@ -111,7 +111,7 @@ func buildRevisionsTab(app *tview.Application) tview.Primitive {
 	return flex
 }
 
-func buildNetworkingTab(app *tview.Application) tview.Primitive {
+func buildNetworkingTab() tview.Primitive {
 	networkingDetail = tview.NewTextView().
 		SetDynamicColors(true).
 		SetScrollable(true).
@@ -171,7 +171,7 @@ func updateNetworkingTab() {
 	networkingDetail.SetText(sb.String())
 }
 
-func buildSecurityTab(app *tview.Application) tview.Primitive {
+func buildSecurityTab() tview.Primitive {
 	securityDetail = tview.NewTextView().
 		SetDynamicColors(true).
 		SetScrollable(true).
