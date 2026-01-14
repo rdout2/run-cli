@@ -8,7 +8,7 @@ import (
 	api_workerpool "github.com/JulienBreux/run-cli/internal/run/api/workerpool"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	model_workerpool "github.com/JulienBreux/run-cli/internal/run/model/workerpool"
-	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/footer"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/table"
 	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell/v2"
@@ -142,9 +142,7 @@ func GetSelectedWorkerPoolFull() *model_workerpool.WorkerPool {
 }
 
 func Shortcuts() {
-	header.ContextShortcutView.Clear()
-	shortcuts := `[dodgerblue]<r> [white]Refresh
-[dodgerblue]<d> [white]Describe
-[dodgerblue]<s> [white]Scale`
-	header.ContextShortcutView.SetText(shortcuts)
+	footer.ContextShortcutView.Clear()
+	shortcuts := `[dodgerblue]<r> [white]Refresh  [dodgerblue]<d> [white]Describe  [dodgerblue]<s> [white]Scale`
+	footer.ContextShortcutView.SetText(shortcuts)
 }

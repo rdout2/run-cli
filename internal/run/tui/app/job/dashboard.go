@@ -9,7 +9,7 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	model_job "github.com/JulienBreux/run-cli/internal/run/model/job"
 	model_execution "github.com/JulienBreux/run-cli/internal/run/model/job/execution"
-	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/footer"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/table"
 	"github.com/dustin/go-humanize"
 	"github.com/rivo/tview"
@@ -168,9 +168,9 @@ func DashboardReload(app *tview.Application, currentInfo info.Info, job *model_j
 
 // DashboardShortcuts sets the shortcuts for the dashboard.
 func DashboardShortcuts() {
-	header.ContextShortcutView.Clear()
-	shortcuts := `[dodgerblue]<esc> [white]Back`
-	header.ContextShortcutView.SetText(shortcuts)
+	footer.ContextShortcutView.Clear()
+	shortcuts := `[dodgerblue]<esc> [white]Back  [dodgerblue]<tab> [white]Next Tab  [dodgerblue]<shift-tab> [white]Prev Tab`
+	footer.ContextShortcutView.SetText(shortcuts)
 }
 
 func shortName(name string) string {

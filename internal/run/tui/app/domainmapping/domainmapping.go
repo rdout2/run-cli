@@ -7,7 +7,7 @@ import (
 	api_domainmapping "github.com/JulienBreux/run-cli/internal/run/api/domainmapping"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	model_domainmapping "github.com/JulienBreux/run-cli/internal/run/model/domainmapping"
-	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/footer"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/table"
 	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell/v2"
@@ -128,11 +128,9 @@ func GetSelectedDomainURL() string {
 }
 
 func Shortcuts() {
-	header.ContextShortcutView.Clear()
-	shortcuts := `[dodgerblue]<r> [white]Refresh
-[dodgerblue]<o> [white]Open URL
-[dodgerblue]<enter> [white]Info`
-	header.ContextShortcutView.SetText(shortcuts)
+	footer.ContextShortcutView.Clear()
+	shortcuts := `[dodgerblue]<r> [white]Refresh  [dodgerblue]<o> [white]Open URL  [dodgerblue]<enter> [white]Info`
+	footer.ContextShortcutView.SetText(shortcuts)
 }
 
 // DomainMappingInfoModal creates a modal to display info for the domain mapping.

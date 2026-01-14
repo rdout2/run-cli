@@ -8,7 +8,7 @@ import (
 	api_job "github.com/JulienBreux/run-cli/internal/run/api/job"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	model_job "github.com/JulienBreux/run-cli/internal/run/model/job"
-	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/footer"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/table"
 	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell/v2"
@@ -141,11 +141,7 @@ func GetSelectedJobFull() *model_job.Job {
 }
 
 func Shortcuts() {
-	header.ContextShortcutView.Clear()
-	shortcuts := `[dodgerblue]<r> [white]Refresh
-[dodgerblue]<d> [white]Describe
-[dodgerblue]<l> [white]Logs
-[dodgerblue]<x> [white]Execute
-[dodgerblue]<enter> [white]Details`
-	header.ContextShortcutView.SetText(shortcuts)
+	footer.ContextShortcutView.Clear()
+	shortcuts := `[dodgerblue]<r> [white]Refresh  [dodgerblue]<d> [white]Describe  [dodgerblue]<l> [white]Logs  [dodgerblue]<x> [white]Execute  [dodgerblue]<enter> [white]Details`
+	footer.ContextShortcutView.SetText(shortcuts)
 }

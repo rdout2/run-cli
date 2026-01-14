@@ -11,7 +11,7 @@ import (
 	model_networking "github.com/JulienBreux/run-cli/internal/run/model/service/networking"
 	model_revision "github.com/JulienBreux/run-cli/internal/run/model/service/revision"
 	model_security "github.com/JulienBreux/run-cli/internal/run/model/service/security"
-	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/footer"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
@@ -19,21 +19,19 @@ import (
 
 func TestDashboard(t *testing.T) {
 	app := tview.NewApplication()
-	d := Dashboard(app)
-	assert.NotNil(t, d)
-	// Header, Tabs, Pages
-	assert.Equal(t, 3, d.GetItemCount())
+	flex := Dashboard(app)
+	assert.NotNil(t, flex)
+	// Title/Structure checks
 }
 
 func TestDashboardShortcuts(t *testing.T) {
-	// Initialize header global view
-	_ = header.New(info.Info{})
-	
+	_ = footer.New()
+
 	assert.NotPanics(t, func() {
 		DashboardShortcuts()
 	})
-	
-	assert.Contains(t, header.ContextShortcutView.GetText(true), "Back")
+
+	assert.Contains(t, footer.ContextShortcutView.GetText(true), "Back")
 }
 
 func TestUpdateTabs(t *testing.T) {

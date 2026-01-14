@@ -9,7 +9,7 @@ import (
 	api_service "github.com/JulienBreux/run-cli/internal/run/api/service"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	model_service "github.com/JulienBreux/run-cli/internal/run/model/service"
-	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/footer"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/table"
 	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell/v2"
@@ -180,12 +180,7 @@ func HandleShortcuts(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func Shortcuts() {
-	header.ContextShortcutView.Clear()
-	shortcuts := `[dodgerblue]<r> [white]Refresh
-[dodgerblue]<d> [white]Describe
-[dodgerblue]<l> [white]Logs
-[dodgerblue]<s> [white]Scale
-[dodgerblue]<o> [white]Open URL
-[dodgerblue]<enter> [white]Details`
-	header.ContextShortcutView.SetText(shortcuts)
+	footer.ContextShortcutView.Clear()
+	shortcuts := `[dodgerblue]<r> [white]Refresh  [dodgerblue]<d> [white]Describe  [dodgerblue]<l> [white]Logs  [dodgerblue]<s> [white]Scale  [dodgerblue]<o> [white]Open URL  [dodgerblue]<enter> [white]Details`
+	footer.ContextShortcutView.SetText(shortcuts)
 }

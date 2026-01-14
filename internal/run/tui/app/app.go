@@ -18,6 +18,7 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/region"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/service"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/workerpool"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/footer"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/loader"
 	"github.com/JulienBreux/run-cli/internal/run/tui/component/spinner"
@@ -172,9 +173,12 @@ func buildLayout() *tview.Flex {
 
 	footerPages.AddPage("error", errorView, true, false)
 
+	shortcutsView := footer.New()
+
 	layout := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(header.New(currentInfo), 7, 1, false).
 		AddItem(pages, 0, 1, true).
+		AddItem(shortcutsView, 1, 1, false).
 		AddItem(footerPages, 1, 1, false)
 
 	return layout

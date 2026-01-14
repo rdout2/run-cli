@@ -8,7 +8,7 @@ import (
 	"github.com/JulienBreux/run-cli/internal/run/model/common/condition"
 	"github.com/JulienBreux/run-cli/internal/run/model/common/info"
 	model_domainmapping "github.com/JulienBreux/run-cli/internal/run/model/domainmapping"
-	"github.com/JulienBreux/run-cli/internal/run/tui/component/header"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/footer"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
@@ -170,15 +170,15 @@ func TestGetSelectedDomainMappingFull_Empty(t *testing.T) {
 }
 
 func TestShortcuts(t *testing.T) {
-	_ = header.New(info.Info{})
+	_ = footer.New()
 
 	assert.NotPanics(t, func() {
 		Shortcuts()
 	})
 
-	assert.Contains(t, header.ContextShortcutView.GetText(true), "Refresh")
-	assert.Contains(t, header.ContextShortcutView.GetText(true), "Open URL")
-	assert.Contains(t, header.ContextShortcutView.GetText(true), "Info")
+	assert.Contains(t, footer.ContextShortcutView.GetText(true), "Refresh")
+	assert.Contains(t, footer.ContextShortcutView.GetText(true), "Open URL")
+	assert.Contains(t, footer.ContextShortcutView.GetText(true), "Info")
 }
 
 func TestRender(t *testing.T) {
