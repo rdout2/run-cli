@@ -14,6 +14,7 @@ import (
 	service_scale "github.com/JulienBreux/run-cli/internal/run/tui/app/service/scale"
 	"github.com/JulienBreux/run-cli/internal/run/tui/app/workerpool"
 	workerpool_scale "github.com/JulienBreux/run-cli/internal/run/tui/app/workerpool/scale"
+	"github.com/JulienBreux/run-cli/internal/run/tui/component/loader"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
@@ -34,10 +35,11 @@ func TestBuildLayout(t *testing.T) {
 
 	assert.NotNil(t, layout)
 	assert.IsType(t, &tview.Flex{}, layout)
-	assert.Equal(t, 4, layout.GetItemCount()) // Header, Pages, Shortcuts, Footer
+	assert.Equal(t, 5, layout.GetItemCount()) // Header, Loading, Pages, Shortcuts, Footer
 	assert.NotNil(t, pages)
+	assert.NotNil(t, loadingPages)
+	assert.NotNil(t, loadingSpinner)
 	assert.NotNil(t, footerPages)
-	assert.NotNil(t, footerSpinner)
 	assert.NotNil(t, errorView)
 }
 
@@ -160,7 +162,16 @@ func TestInitializeApp(t *testing.T) {
 	
 	// Ensure rootPages is init
 	rootPages = tview.NewPages()
-	rootPages.AddPage(LOADER_PAGE_ID, tview.NewBox(), true, true)
+	// Re-initialize mainLoader to be safe against race/overwrite in other tests
+	mainLoader = loader.New(app)
+	rootPages.AddPage(LOADER_PAGE_ID, mainLoader, true, true)
+	
+	if mainLoader == nil {
+		t.Fatal("mainLoader is nil")
+	}
+	if mainLoader.Spinner == nil {
+		t.Fatal("mainLoader.Spinner is nil")
+	}
 	
 	initializeApp(currentConfig)
 	

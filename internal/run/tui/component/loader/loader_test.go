@@ -14,5 +14,5 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, l)
 	assert.NotNil(t, l.Flex)
 	assert.NotNil(t, l.Spinner)
-	assert.Equal(t, 4, l.Flex.GetItemCount())
+	assert.Equal(t, 4, l.GetItemCount())
 }

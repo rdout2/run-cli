@@ -29,7 +29,7 @@ func New(app *tview.Application) *Loader {
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(nil, 0, 1, false).
-		AddItem(logoView, 7, 1, false).
+		AddItem(logoView, 6, 1, false).
 		AddItem(s, 2, 1, false). // Increased height to 2 for second line
 		AddItem(nil, 0, 1, false)
 

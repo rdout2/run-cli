@@ -72,9 +72,9 @@ func (s *Spinner) Start(message string) {
 				s.mu.Unlock()
 
 				s.app.QueueUpdateDraw(func() {
-					text := fmt.Sprintf("%s %s", frames[i], msg)
+					text := fmt.Sprintf(" %s %s", frames[i], msg)
 					if ctxInfo != "" {
-						text += fmt.Sprintf("\n[gray]%s", ctxInfo)
+						text += fmt.Sprintf("\n [gray]%s", ctxInfo)
 					}
 					s.SetText(text)
 				})
@@ -96,7 +96,7 @@ func (s *Spinner) Stop(message string) {
 
 	if message != "" {
 		s.app.QueueUpdateDraw(func() {
-			s.SetText(message)
+			s.SetText(" " + message)
 		})
 	}
 }

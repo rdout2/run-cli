@@ -41,9 +41,11 @@ var (
 	projectModal tview.Primitive
 	regionModal  tview.Primitive
 
-	footerPages   *tview.Pages
-	footerSpinner *spinner.Spinner
-	errorView     *tview.TextView
+	loadingPages   *tview.Pages
+	loadingSpinner *spinner.Spinner
+
+	footerPages *tview.Pages
+	errorView   *tview.TextView
 
 	konamiBuffer []string
 	konamiCode   = []string{
@@ -167,20 +169,24 @@ func buildLayout() *tview.Flex {
 	pages.AddPage(service.DASHBOARD_PAGE_ID, service.Dashboard(app), true, false)
 	pages.AddPage(job.DASHBOARD_PAGE_ID, job.Dashboard(app), true, false)
 
-	// Footer (Spinner & Error)
+	// Loading (Top)
+	loadingSpinner = spinner.New(app)
+	loadingSpinner.SetTextAlign(tview.AlignLeft)
+	loadingPages = tview.NewPages()
+	loadingPages.AddPage("empty", tview.NewBox(), true, true)
+	loadingPages.AddPage("loading", loadingSpinner, true, false)
+
+	// Footer (Error)
 	errorView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter)
 	footerPages = tview.NewPages()
 	footerPages.AddPage("empty", tview.NewBox(), true, true)
-
-	footerSpinner = spinner.New(app)
-	footerPages.AddPage("loading", footerSpinner, true, false)
-
 	footerPages.AddPage("error", errorView, true, false)
 
 	shortcutsView := footer.New()
 
 	layout := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(header.New(currentInfo), 5, 1, false).
+		AddItem(loadingPages, 1, 1, false).
 		AddItem(pages, 0, 1, true).
 		AddItem(shortcutsView, 1, 1, false).
 		AddItem(footerPages, 1, 1, false)
@@ -398,13 +404,13 @@ func shortcuts(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func showLoading() {
-	footerSpinner.Start("Loading...")
-	footerPages.SwitchToPage("loading")
+	loadingSpinner.Start("Loading...")
+	loadingPages.SwitchToPage("loading")
 }
 
 func hideLoading() {
-	footerSpinner.Stop("")
-	footerPages.SwitchToPage("empty")
+	loadingSpinner.Stop("")
+	loadingPages.SwitchToPage("empty")
 }
 
 func showError(err error) {
