@@ -6,8 +6,14 @@ import (
 	"github.com/rivo/tview"
 )
 
+// Loader represents the loader component.
+type Loader struct {
+	*tview.Flex
+	Spinner *spinner.Spinner
+}
+
 // New returns a new loader component.
-func New(app *tview.Application) tview.Primitive {
+func New(app *tview.Application) *Loader {
 	// Spinner
 	s := spinner.New(app)
 	s.SetTextAlign(tview.AlignCenter)
@@ -23,9 +29,12 @@ func New(app *tview.Application) tview.Primitive {
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(nil, 0, 1, false).
-		AddItem(logoView, 6, 1, false).
-		AddItem(s, 1, 1, false).
+		AddItem(logoView, 7, 1, false).
+		AddItem(s, 2, 1, false). // Increased height to 2 for second line
 		AddItem(nil, 0, 1, false)
 
-	return flex
+	return &Loader{
+		Flex:    flex,
+		Spinner: s,
+	}
 }

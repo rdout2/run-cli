@@ -12,7 +12,7 @@ func TestNew(t *testing.T) {
 	l := New(app)
 
 	assert.NotNil(t, l)
-	flex, ok := l.(*tview.Flex)
-	assert.True(t, ok, "Loader should return a *tview.Flex")
-	assert.Equal(t, 4, flex.GetItemCount())
+	assert.NotNil(t, l.Flex)
+	assert.NotNil(t, l.Spinner)
+	assert.Equal(t, 4, l.Flex.GetItemCount())
 }

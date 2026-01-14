@@ -54,3 +54,13 @@ func TestStartStop(t *testing.T) {
 	assert.Nil(t, s.cancel, "Cancel function should be nil after Stop")
 	s.mu.Unlock()
 }
+
+func TestSetContext(t *testing.T) {
+	app := tview.NewApplication()
+	s := New(app)
+
+	s.SetContext("loading something")
+	s.mu.Lock()
+	assert.Equal(t, "loading something", s.context)
+	s.mu.Unlock()
+}

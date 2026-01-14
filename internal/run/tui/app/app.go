@@ -28,9 +28,10 @@ import (
 )
 
 var (
-	app       *tview.Application
-	rootPages *tview.Pages // Root pages to hold Layout and Loader
-	pages     *tview.Pages // Content pages (Service, Job, etc.)
+	app        *tview.Application
+	rootPages  *tview.Pages // Root pages to hold Layout and Loader
+	pages      *tview.Pages // Content pages (Service, Job, etc.)
+	mainLoader *loader.Loader
 
 	previousPageID string
 	currentPageID  string
@@ -82,7 +83,8 @@ func Run(cfg *config.Config) error {
 
 	// Root Pages (Loader vs App)
 	rootPages = tview.NewPages()
-	rootPages.AddPage(LOADER_PAGE_ID, loader.New(app), true, true)
+	mainLoader = loader.New(app)
+	rootPages.AddPage(LOADER_PAGE_ID, mainLoader, true, true)
 
 	// Start initialization in background
 	go initializeApp(cfg)
@@ -118,11 +120,13 @@ func initializeApp(cfg *config.Config) {
 
 	go func() {
 		defer wg.Done()
+		mainLoader.Spinner.SetContext("Projects...")
 		_ = project.PreLoad()
 	}()
 
 	go func() {
 		defer wg.Done()
+		mainLoader.Spinner.SetContext("Services...")
 		if svcs, err := service.Fetch(currentInfo.Project, currentInfo.Region); err == nil {
 			services = svcs
 		}

@@ -23,6 +23,7 @@ func setupTestApp() {
 	app = tview.NewApplication()
 	rootPages = tview.NewPages()
 	pages = tview.NewPages()
+	mainLoader = loader.New(app)
 	currentConfig = &config.Config{Project: "test-project", Region: "us-central1"}
 }
 
